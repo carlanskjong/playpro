@@ -28,7 +28,8 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 | `search` | **Search** page | – |
 | `mylist` | Watchlist and Rate buttons, **My list** page, "Your watchlist" row, badges on posters | – |
 | `friends` | **Friends** page, profiles, feed row, friends' ratings on titles | `mylist` (ratings come from there) |
-| `imdb` | IMDb rating chip and link | `OMDB_API_KEY` for the number |
+| `imdb` | IMDb rating on posters and title pages, link to IMDb | the ratings import (README step 3) |
+| `rottentomatoes` | Rotten Tomatoes score chip with date, link to RT | the ratings import (README step 3) |
 
 ## Add a new feature
 
@@ -72,5 +73,6 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 - **Leaving soon / new this week in Norway:** TMDB `discover` sorted by date, per service
 - **Watch party:** friends vote on what to watch Friday
 - **Lists:** "Best of 2026", shareable with friends
-- **Import from IMDb:** IMDb lets you export your ratings as a CSV; a feature could read that file
+- **Import your own IMDb ratings:** IMDb lets you export your ratings as a CSV; a feature could read that file
+- **Sort Browse by IMDb score:** the ratings are in your database now, so a feature could re-sort what TMDB returns
 - **Norwegian language:** set `LANGUAGE: "nb-NO"` in `config.js` for Norwegian titles and descriptions (the app's own buttons stay English until translated)

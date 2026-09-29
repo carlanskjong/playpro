@@ -4,7 +4,6 @@ import { esc } from "../lib/ui.js";
 
 export function privacyView({ el }) {
   document.title = "Privacy · Playpro";
-  const omdb = !!config.OMDB_API_KEY;
   el.innerHTML = `
     <article class="prose">
       <p class="eyebrow">Privacy notice</p>
@@ -40,12 +39,12 @@ export function privacyView({ el }) {
         <li><strong>Supabase</strong> stores accounts and data on servers in the EU (acting as our data processor).</li>
         <li><strong>The web host</strong> that serves the app's files sees normal technical data such as your IP address.</li>
         <li><strong>TMDB</strong> (themoviedb.org): your device fetches movie information, posters and streaming data directly from TMDB, so TMDB sees your IP address. We don't send them anything about you.</li>
-        ${omdb ? `<li><strong>OMDb</strong> (omdbapi.com): your device fetches IMDb ratings from OMDb, which sees your IP address.</li>` : ""}
-        <li>Trailer and IMDb buttons open YouTube or IMDb in a new tab; their own privacy policies apply there.</li>
+        <li><strong>IMDb and Rotten Tomatoes scores</strong> are copied into our own database once a week (from IMDb's public data files and Wikidata). Your device never contacts IMDb or Wikidata for them.</li>
+        <li>Trailer, IMDb and Rotten Tomatoes buttons open those websites in a new tab; their own privacy policies apply there.</li>
       </ul>
 
       <h2>Cookies and local storage</h2>
-      <p>Playpro doesn't use cookies. It keeps your login and a small cache of ratings in your browser's local storage.
+      <p>Playpro doesn't use cookies. It keeps your login and a small cache of movie ids in your browser's local storage.
       This is strictly necessary for the app to work, so no cookie banner is needed.</p>
 
       <h2>How long we keep it</h2>
@@ -79,7 +78,14 @@ export function aboutView({ el }) {
         <a class="jw-badge" href="https://www.justwatch.com" target="_blank" rel="noopener">JustWatch</a>
         <p>Streaming availability is provided by JustWatch through TMDB.</p>
       </div>
-      ${config.OMDB_API_KEY ? `<div class="credit"><a class="imdb-badge" href="https://www.omdbapi.com" target="_blank" rel="noopener">OMDb</a><p>IMDb ratings are provided by the OMDb API. Playpro is not affiliated with IMDb.</p></div>` : ""}
+      <div class="credit">
+        <a class="imdb-badge" href="https://www.imdb.com" target="_blank" rel="noopener">IMDb</a>
+        <p>Information courtesy of IMDb (<a href="https://www.imdb.com" target="_blank" rel="noopener">https://www.imdb.com</a>). Used with permission. IMDb ratings come from IMDb's non-commercial datasets. Playpro is not affiliated with IMDb.</p>
+      </div>
+      <div class="credit">
+        <a class="wd-badge" href="https://www.wikidata.org" target="_blank" rel="noopener">Wikidata</a>
+        <p>Rotten Tomatoes scores come from Wikidata (CC0), with the date they were recorded. Playpro is not affiliated with Rotten Tomatoes or Fandango.</p>
+      </div>
       <p><a href="#/privacy">Read the privacy notice</a></p>
     </article>`;
 }

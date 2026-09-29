@@ -4,7 +4,7 @@ A free, private app for you and your friends that combines the best of **IMDb** 
 
 - **Where to watch in Norway:** Netflix, Max, Viaplay, TV 2 Play, NRK TV, Disney+, Prime Video and others. Your own services are highlighted.
 - **Browse** everything streaming in Norway by service, genre and rating.
-- **Ratings:** TMDB score, IMDb score (optional), and your friends' average.
+- **Ratings:** IMDb score (on every poster), Rotten Tomatoes score, and your friends' average.
 - **Watchlist + "seen it"** with 1–10 ratings and short reviews.
 - **Friends:** friend requests, an activity feed, and friends' reviews on every title.
 - **Privacy built in:** invite-only sign-up, no tracking, and buttons to download or delete your own data.
@@ -20,7 +20,9 @@ It costs **0 kr** to run and doesn't touch your other Supabase or Netlify projec
 |---|---|
 | Is there a free IMDb API? | **No.** IMDb's official API is a paid enterprise product (via AWS). Their free "datasets" are huge daily files with no posters and aren't usable from a website. |
 | Is there a PlayPilot API? | **No public one.** PlayPilot sells its data to businesses only. |
-| So what does Playpro use? | **[TMDB](https://www.themoviedb.org)**: a free, community-run movie database (non-commercial use). Its "where to watch" data comes from **JustWatch**, the same kind of data PlayPilot shows. **[OMDb](https://www.omdbapi.com)** (optional) adds real IMDb ratings: free up to 1,000 lookups a day, and Playpro caches them. |
+| So what does Playpro use? | **[TMDB](https://www.themoviedb.org)**: a free, community-run movie database (non-commercial use). Its "where to watch" data comes from **JustWatch**, the same kind of data PlayPilot shows. |
+| IMDb ratings? | IMDb's free **[non-commercial ratings file](https://developer.imdb.com/non-commercial-datasets/)**. A free weekly GitHub job copies it into your own database, so no extra service sees your friends. |
+| Rotten Tomatoes? | Rotten Tomatoes has **no free API** (licences are sold by Fandango) and its [terms of use](https://www.rottentomatoes.com/policies/terms-of-use) forbid copying from the site. The legal free source is **[Wikidata](https://www.wikidata.org)**, the open (CC0) database behind Wikipedia, which records Tomatometer scores with a date. The same weekly job copies those. Some titles are missing or have an older score, and the app always shows the date. |
 | Accounts and database? | **[Supabase](https://supabase.com)** free plan, in a **new, separate project** in the EU. |
 | Hosting? | **[Cloudflare Pages](https://pages.cloudflare.com)** free plan. **Not Netlify:** Netlify's free plan has one shared monthly allowance for your whole account, so if Playpro used it up, your *other* site would be paused too. Cloudflare Pages has unlimited free bandwidth and is completely separate. |
 
@@ -28,7 +30,7 @@ It costs **0 kr** to run and doesn't touch your other Supabase or Netlify projec
 
 ## Setup: about 30–45 minutes, no coding
 
-You'll create three free accounts, copy some keys into one file, and publish. Screens on these websites change now and then, so a button may have a slightly different name.
+You'll create three free accounts (TMDB, Supabase, Cloudflare), copy some keys, and publish. Screens on these websites change now and then, so a button may have a slightly different name.
 
 ### Step 1: Get a TMDB key (movie data)
 
@@ -37,14 +39,7 @@ You'll create three free accounts, copy some keys into one file, and publish. Sc
 3. Fill in the form. For "Application URL", put where you'll host it, e.g. `https://playpro.pages.dev`. For the description, write something like *"Private, non-commercial app for friends to track movies."*
 4. Copy the **API Key** (the short one, *not* the long "Read Access Token").
 
-### Step 2 (optional): Get an OMDb key (IMDb ratings)
-
-1. Go to [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx), choose **FREE (1,000 daily limit)**, and enter your email.
-2. Click the activation link in the email. The key is in the same email.
-
-Skip this and the app still shows an "IMDb ↗" link, just without the number.
-
-### Step 3: Create a new Supabase project (accounts + database)
+### Step 2: Create a new Supabase project (accounts + database)
 
 > ⚠️ **Create a NEW project. Never run Playpro's setup in your existing project.** Its sign-up rules would apply to your other app too.
 
@@ -61,7 +56,23 @@ Skip this and the app still shows an "IMDb ↗" link, just without the number.
    *Why:* Supabase's built-in email sender only delivers to your own team's addresses, a few per hour. With confirmation on, your friends would never get their email. (Want confirmation and "forgot password" emails? See *Optional extras* below.)
 7. Go to **Project Settings → API** (or **Data API / API Keys**) and copy:
    - the **Project URL** (`https://xxxx.supabase.co`)
-   - the **anon / publishable** key (**never** the `service_role` / secret key)
+   - the **anon / publishable** key: this one goes in the app
+   - the **secret / service_role** key: this one goes **only** into GitHub in the next step, never in the app
+
+### Step 3: Switch on the weekly ratings import (IMDb + Rotten Tomatoes)
+
+A small job on GitHub (free) copies IMDb ratings and Rotten Tomatoes scores into your database twice a week. As a bonus, this keeps your free Supabase project from going to sleep.
+
+1. On GitHub, open this repository → **Settings → Secrets and variables → Actions → New repository secret**.
+2. Add two secrets:
+   - Name `SUPABASE_URL`, value: your Project URL
+   - Name `SUPABASE_SERVICE_KEY`, value: the **secret / service_role** key
+3. Go to the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
+4. Click **Import ratings → Run workflow**. After a few minutes it should show a green tick ✅. Click it to see how many titles were imported.
+
+GitHub only runs (and shows) this job once the code is on your repository's **main branch**. If you don't see "Import ratings", merge the app into `main` first.
+
+Secrets are stored encrypted by GitHub and are never shown in the code or to visitors.
 
 ### Step 4: Put your keys in the app
 
@@ -99,8 +110,8 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 
 ## Keeping it free
 
-- **Supabase pauses free projects after 7 days without any use.** If that happens, open the Supabase dashboard and click **Restore**. Nothing is lost.
-- All limits are far above what a group of friends will use: Supabase allows 50,000 monthly users and 500 MB of data; Cloudflare Pages has unlimited bandwidth; TMDB has no daily cap; OMDb allows 1,000 lookups a day and Playpro caches them for a week.
+- **Supabase pauses free projects after 7 days without any use.** The twice-weekly ratings import should keep it awake. If it's paused anyway, open the Supabase dashboard and click **Restore**. Nothing is lost.
+- All limits are far above what a group of friends will use: Supabase allows 50,000 monthly users and 500 MB of data (the ratings use about 20 MB); Cloudflare Pages has unlimited bandwidth; TMDB has no daily cap; the import uses a few minutes of GitHub's 2,000 free minutes a month.
 - Nothing requires a credit card.
 
 ## GDPR: what's built in, and what's on you
@@ -113,10 +124,11 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 - Invite-only sign-up with a consent checkbox that links to the privacy notice (in the app at `#/privacy`).
 - Your data is private by default: only accepted friends see your ratings; other members only see your username.
 - **Download my data** (right of access/portability) and **Delete my account** (right to erasure) buttons in Settings.
-- No cookies, analytics, ads, Google Fonts or embedded YouTube players. Posters come from TMDB, and the privacy notice says so.
+- No cookies, analytics, ads, Google Fonts or embedded YouTube players. Posters come from TMDB, and the privacy notice says so. IMDb and Rotten Tomatoes scores are stored in your own database, so those services never see your friends.
 - The database rules are strict: every table has Row Level Security, and they were tested.
 
 **Your part as the person running it:**
+- IMDb's data file is licensed for **personal and non-commercial use only**, and their terms say it mustn't be used to build a movie database for others. Playpro stores only the rating and vote count, readable only by signed-in members of your private, invite-only group. That is a reasonable reading of "personal, non-commercial", but it is a grey area. Keep the app private and free; if IMDb ever objects, switch the feature off (one line) and delete the table.
 - Fill in `OWNER_NAME` and `OWNER_EMAIL` in `js/config.js` and answer if someone emails you.
 - Keep the invite code among friends. Change it anytime in Supabase (see the comment in `schema.sql`).
 - Don't add tracking or analytics scripts.
@@ -143,12 +155,15 @@ js/features/             one folder per feature
   search/                search page
   mylist/                watchlist, ratings, reviews
   friends/               friends, feed, profiles
-  imdb/                  IMDb rating chip
+  imdb/                  IMDb ratings on posters and title pages
+  rottentomatoes/        Rotten Tomatoes score (via Wikidata)
   _template/             copy this to make a new feature
 js/core/                 the app's frame: navigation, home, title page, settings, login, privacy
 js/lib/                  helpers: TMDB, Supabase, shared UI pieces
 css/styles.css           all styling; colours are at the top
 supabase/schema.sql      database setup (run once in Supabase)
+scripts/import-ratings.mjs          the IMDb + Rotten Tomatoes import
+.github/workflows/import-ratings.yml runs the import twice a week
 sw.js, manifest.webmanifest, icons/   what makes it an installable app
 ```
 
@@ -158,4 +173,4 @@ In a terminal in this folder, run `python3 -m http.server 8000` and open <http:/
 
 ## Credits
 
-This product uses the TMDB API but is not endorsed or certified by TMDB. Streaming availability is provided by JustWatch. IMDb ratings come via the OMDb API. Playpro is not affiliated with IMDb or PlayPilot.
+This product uses the TMDB API but is not endorsed or certified by TMDB. Streaming availability is provided by JustWatch. Information courtesy of IMDb (https://www.imdb.com). Used with permission. Rotten Tomatoes scores via Wikidata (CC0). Playpro is not affiliated with IMDb, Rotten Tomatoes, Fandango or PlayPilot.

@@ -12,4 +12,5 @@ import "./features/discover/index.js";  // Home hero + trending rows, cast, "mor
 import "./features/search/index.js";    // Search page
 import "./features/mylist/index.js";    // Watchlist, "seen it" + your 1-10 ratings
 import "./features/friends/index.js";   // Friends, their ratings, activity feed (needs mylist)
-import "./features/imdb/index.js";      // IMDb rating + link (needs OMDB_API_KEY in config.js)
+import "./features/imdb/index.js";      // IMDb ratings on posters and title pages (needs the ratings import)
+import "./features/rottentomatoes/index.js"; // Rotten Tomatoes score via Wikidata (needs the ratings import)

@@ -13,9 +13,6 @@ export default {
   // themoviedb.org -> Settings -> API -> "API Key"
   TMDB_API_KEY: "YOUR-TMDB-API-KEY",
 
-  // Optional: shows IMDb ratings. Free key from omdbapi.com (leave "" to hide)
-  OMDB_API_KEY: "",
-
   // "Where to watch" data is for this country (Norway)
   COUNTRY: "NO",
 

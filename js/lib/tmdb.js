@@ -1,5 +1,4 @@
-// Movie & series data from TMDB (themoviedb.org) and, optionally,
-// IMDb ratings through OMDb (omdbapi.com).
+// Movie & series data from TMDB (themoviedb.org).
 import config from "../config.js";
 
 const API = "https://api.themoviedb.org/3";
@@ -100,24 +99,16 @@ export async function providers(region) {
   return [...byId.values()].sort((a, b) => rank(a) - rank(b));
 }
 
-// IMDb rating via OMDb. Cached for a week so we stay far below the
-// free limit of 1,000 requests per day.
-export async function imdbRating(imdbId) {
-  if (!config.OMDB_API_KEY || !imdbId) return null;
-  const storageKey = "omdb:" + imdbId;
+// The IMDb id of a title (e.g. "tt15239678"). It never changes, so it is
+// remembered in the browser to avoid asking TMDB twice.
+export async function imdbId(type, id) {
+  const key = `imdb-id:${type}:${id}`;
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-    if (saved && Date.now() - saved.t < 7 * 864e5) return saved.v;
+    const saved = localStorage.getItem(key);
+    if (saved !== null) return saved || null;
   } catch { /* storage unavailable */ }
-  try {
-    const res = await fetch(`https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(config.OMDB_API_KEY)}`);
-    const data = await res.json();
-    const value = data && data.imdbRating && data.imdbRating !== "N/A"
-      ? { rating: data.imdbRating, votes: data.imdbVotes }
-      : null;
-    try { localStorage.setItem(storageKey, JSON.stringify({ t: Date.now(), v: value })); } catch { /* ignore */ }
-    return value;
-  } catch {
-    return null;
-  }
+  const data = await get(`/${type}/${id}/external_ids`);
+  const value = data.imdb_id || "";
+  try { localStorage.setItem(key, value); } catch { /* ignore */ }
+  return value || null;
 }

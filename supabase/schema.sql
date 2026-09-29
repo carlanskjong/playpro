@@ -76,6 +76,24 @@ create unique index if not exists friendships_pair_idx
 create index if not exists friendships_addressee_idx on public.friendships (addressee);
 
 
+-- Ratings copied in by the weekly import job (scripts/import-ratings.mjs).
+-- Not personal data: one row per title, shared by everyone.
+create table if not exists public.imdb_ratings (
+  imdb_id    text primary key check (imdb_id ~ '^tt[0-9]+$'),
+  rating     numeric(3, 1) not null,
+  votes      integer not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.rt_scores (
+  imdb_id    text primary key check (imdb_id ~ '^tt[0-9]+$'),
+  score      smallint not null check (score between 0 and 100),
+  as_of      date,                 -- when Wikidata recorded the score
+  rt_id      text,                 -- e.g. "m/parasite_2019", for the link
+  updated_at timestamptz not null default now()
+);
+
+
 -- ---------------------------------------------------------------------
 -- 3. Helper functions
 -- ---------------------------------------------------------------------
@@ -183,6 +201,21 @@ revoke update on public.friendships from anon, authenticated;
 grant  update (status) on public.friendships to authenticated;
 -- Visitors who are not logged in get nothing.
 revoke all on public.profiles, public.entries, public.friendships from anon;
+
+-- ratings: signed-in members can read; only the import job (which uses the
+-- secret key and skips these rules) can write
+alter table public.imdb_ratings enable row level security;
+alter table public.rt_scores    enable row level security;
+revoke all on public.imdb_ratings, public.rt_scores from anon, authenticated;
+grant  select on public.imdb_ratings, public.rt_scores to authenticated;
+
+drop policy if exists "imdb_ratings: members can read" on public.imdb_ratings;
+create policy "imdb_ratings: members can read" on public.imdb_ratings
+  for select to authenticated using (true);
+
+drop policy if exists "rt_scores: members can read" on public.rt_scores;
+create policy "rt_scores: members can read" on public.rt_scores
+  for select to authenticated using (true);
 
 -- profiles: members can see usernames (to find friends); edit only your own
 drop policy if exists "profiles: members can read" on public.profiles;

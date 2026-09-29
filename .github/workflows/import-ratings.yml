@@ -1,0 +1,29 @@
+# Copies IMDb ratings and Rotten Tomatoes scores (via Wikidata) into the
+# Playpro Supabase database. Runs twice a week, which also keeps the free
+# Supabase project from falling asleep. You can also start it by hand:
+# GitHub → Actions → "Import ratings" → Run workflow.
+name: Import ratings
+
+on:
+  schedule:
+    - cron: "17 3 * * 1,4" # Mondays and Thursdays at 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Import ratings
+        run: node scripts/import-ratings.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MIN_VOTES: "1000"
