@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Playpro</title>
+  <meta name="description" content="Where to stream it in Norway, what your friends think, and your own ratings.">
+  <meta name="theme-color" content="#0b0b12">
+  <meta name="color-scheme" content="dark">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://image.tmdb.org; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.themoviedb.org https://www.omdbapi.com; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Playpro">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#view">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="Playpro home">
+      <img src="icons/icon.svg" alt="" width="30" height="30">
+      <span>Playpro</span>
+    </a>
+    <nav class="topnav" id="topnav" aria-label="Main"></nav>
+    <div class="me" id="me"></div>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+  <div id="toasts" aria-live="polite"></div>
+
+  <noscript><p class="noscript">Playpro needs JavaScript switched on.</p></noscript>
+  <script src="js/vendor/supabase.js"></script>
+  <script type="module" src="js/core/app.js"></script>
+</body>
+</html>
