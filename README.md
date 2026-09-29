@@ -10,7 +10,7 @@ A free, private app for you and your friends that combines the best of **IMDb** 
 - **Privacy built in:** invite-only sign-up, no tracking, and buttons to download or delete your own data.
 - **Plug-in features:** switch features on and off with one line (see [docs/FEATURES.md](docs/FEATURES.md)).
 
-It costs **0 kr** to run and doesn't touch your other Supabase or Netlify project.
+It costs **0 kr** to run, is published straight from GitHub, and doesn't touch your other Supabase or Netlify project.
 
 ---
 
@@ -24,19 +24,19 @@ It costs **0 kr** to run and doesn't touch your other Supabase or Netlify projec
 | IMDb ratings? | IMDb's free **[non-commercial ratings file](https://developer.imdb.com/non-commercial-datasets/)**. A free weekly GitHub job copies it into your own database, so no extra service sees your friends. |
 | Rotten Tomatoes? | Rotten Tomatoes has **no free API** (licences are sold by Fandango) and its [terms of use](https://www.rottentomatoes.com/policies/terms-of-use) forbid copying from the site. The legal free source is **[Wikidata](https://www.wikidata.org)**, the open (CC0) database behind Wikipedia, which records Tomatometer scores with a date. The same weekly job copies those. Some titles are missing or have an older score, and the app always shows the date. |
 | Accounts and database? | **[Supabase](https://supabase.com)** free plan, in a **new, separate project** in the EU. |
-| Hosting? | **[Cloudflare Pages](https://pages.cloudflare.com)** free plan. **Not Netlify:** Netlify's free plan has one shared monthly allowance for your whole account, so if Playpro used it up, your *other* site would be paused too. Cloudflare Pages has unlimited free bandwidth and is completely separate. |
+| Hosting? | **[GitHub Pages](https://pages.github.com)**: free, publishes straight from this repository, no extra account. **Not Netlify:** Netlify's free plan has one shared monthly allowance for your whole account, and every publish uses part of it, so Playpro could end up pausing your *other* site. |
 
 ---
 
 ## Setup: about 30–45 minutes, no coding
 
-You'll create three free accounts (TMDB, Supabase, Cloudflare), copy some keys, and publish. Screens on these websites change now and then, so a button may have a slightly different name.
+You'll create two free accounts (TMDB and Supabase), copy some keys, and switch on publishing in GitHub. Screens on these websites change now and then, so a button may have a slightly different name.
 
 ### Step 1: Get a TMDB key (movie data)
 
 1. Create a free account at [themoviedb.org/signup](https://www.themoviedb.org/signup) and confirm your email.
 2. Go to **Settings → API** ([direct link](https://www.themoviedb.org/settings/api)) and request an API key. Choose **Developer / Personal use**.
-3. Fill in the form. For "Application URL", put where you'll host it, e.g. `https://playpro.pages.dev`. For the description, write something like *"Private, non-commercial app for friends to track movies."*
+3. Fill in the form. For "Application URL", put `https://carlanskjong.github.io/playpro/`. For the description, write something like *"Private, non-commercial app for friends to track movies."*
 4. Copy the **API Key** (the short one, *not* the long "Read Access Token").
 
 ### Step 2: Create a new Supabase project (accounts + database)
@@ -70,7 +70,7 @@ A small job on GitHub (free) copies IMDb ratings and Rotten Tomatoes scores into
 3. Go to the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
 4. Click **Import ratings → Run workflow**. After a few minutes it should show a green tick ✅. Click it to see how many titles were imported.
 
-GitHub only runs (and shows) this job once the code is on your repository's **main branch**. If you don't see "Import ratings", merge the app into `main` first.
+GitHub only runs (and shows) this job from the repository's **default branch** (Settings → General shows which one that is). The app is already on it.
 
 Secrets are stored encrypted by GitHub and are never shown in the code or to visitors.
 
@@ -81,21 +81,18 @@ Secrets are stored encrypted by GitHub and are never shown in the code or to vis
 3. Replace the placeholder values in quotes with your keys, and put your name and email under `OWNER_NAME` / `OWNER_EMAIL` (the privacy notice shows these).
 4. Click **Commit changes**.
 
-> 🔒 Keep this GitHub repository **private**. The keys are designed to be public inside a website (the database's own rules protect your data), but there's no reason to advertise them.
+> 🔓 Free GitHub Pages needs the repository to be **public**, so these keys are visible to anyone who looks. That's fine: the Supabase publishable key is designed to be public (the database's own rules decide what anyone can do), and the TMDB key is read-only; if it's ever misused, create a new one on TMDB. The things that must stay secret are **not** in the code: the invite code lives only in your database, and the secret Supabase key lives only in GitHub's encrypted secrets.
 
-### Step 5: Publish it for free on Cloudflare Pages
+### Step 5: Publish it with GitHub Pages
 
-1. Create a free account at [dash.cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up).
-2. Go to **Workers & Pages → Create → Pages → Connect to Git**, connect your GitHub account, and pick the `playpro` repository.
-3. Settings:
-   - **Production branch:** the branch with the app (e.g. `main`)
-   - **Framework preset:** *None*
-   - **Build command:** leave empty
-   - **Build output directory:** `/` (or leave empty)
-4. Click **Save and Deploy**. After a minute you get a link like `https://playpro.pages.dev`.
-5. Back in **Supabase → Authentication → URL Configuration**, set **Site URL** to that link, add it under **Redirect URLs** too, and save.
+1. On GitHub, open this repository → **Settings → Pages**.
+2. Under **Build and deployment**:
+   - **Source:** *Deploy from a branch*
+   - **Branch:** `claude/imdb-playpilot-pwa-pvjzp7` (the branch with the app), folder **/ (root)**
+3. Click **Save**. After a minute or two the page shows your address: **https://carlanskjong.github.io/playpro/**
+4. In **Supabase → Authentication → URL Configuration**, set **Site URL** to that address, add it under **Redirect URLs** too, and save.
 
-Every time you change a file on GitHub, Cloudflare publishes the new version automatically.
+Every time you change a file on GitHub, the new version goes live within a minute or two. (The repository contains an empty `.nojekyll` file; leave it, so GitHub publishes every file exactly as it is.)
 
 ### Step 6: Invite your friends 🎉
 
@@ -111,7 +108,8 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 ## Keeping it free
 
 - **Supabase pauses free projects after 7 days without any use.** The twice-weekly ratings import should keep it awake. If it's paused anyway, open the Supabase dashboard and click **Restore**. Nothing is lost.
-- All limits are far above what a group of friends will use: Supabase allows 50,000 monthly users and 500 MB of data (the ratings use about 20 MB); Cloudflare Pages has unlimited bandwidth; TMDB has no daily cap; the import uses a few minutes of GitHub's 2,000 free minutes a month.
+- All limits are far above what a group of friends will use: Supabase allows 50,000 monthly users and 500 MB of data (the ratings use about 20 MB); GitHub Pages allows 100 GB of traffic a month (posters come from TMDB, not from your site); TMDB has no daily cap; GitHub Actions is free for public repositories.
+- **GitHub switches off scheduled jobs in public repositories after 60 days without any commits.** GitHub emails you first. If it happens, go to **Actions → Import ratings → Enable workflow**, or just commit any small change now and then.
 - Nothing requires a credit card.
 
 ## GDPR: what's built in, and what's on you
@@ -137,7 +135,7 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 ## Optional extras
 
 - **Emails (confirm sign-up, "forgot password"):** create a free account at an email service such as [Brevo](https://www.brevo.com) (300 emails/day free) or [Resend](https://resend.com) (3,000/month free). Put its SMTP details in **Supabase → Authentication → Emails → SMTP Settings**. Then you can turn "Confirm email" back on. Remember to list the email service in the privacy notice.
-- **Your own domain:** Cloudflare Pages → your project → Custom domains.
+- **Your own domain:** GitHub → Settings → Pages → Custom domain (the domain itself costs money).
 
 ## Adding, removing and changing features
 

@@ -1,4 +1,5 @@
-# Security headers (used by Cloudflare Pages and Netlify)
+# Security headers for Cloudflare Pages or Netlify, if you ever move there.
+# GitHub Pages ignores this file; the app's own security rules are in index.html.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
