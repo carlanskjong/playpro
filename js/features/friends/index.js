@@ -12,7 +12,7 @@ import {
   removeFriendship, profileByUsername, entriesOf,
 } from "../../lib/db.js";
 import { img } from "../../lib/tmdb.js";
-import { esc, icon, avatar, row, grid, card, empty, toast, errorMessage, entryToItem, timeAgo } from "../../lib/ui.js";
+import { esc, icon, avatar, row, grid, card, empty, toast, errorMessage, entryToItem, timeAgo, confirmDialog } from "../../lib/ui.js";
 
 const userLink = (username) => `<a class="user-link" href="#/u/${encodeURIComponent(username)}">${esc(username)}</a>`;
 
@@ -158,7 +158,7 @@ async function friendsView({ el }) {
         await requestFriend(b.dataset.add);
         toast("Friend request sent", "good");
       } else if (b.dataset.remove) {
-        if (b.dataset.name && !confirm(`Remove ${b.dataset.name} as a friend?`)) { b.disabled = false; return; }
+        if (b.dataset.name && !(await confirmDialog(`Remove ${b.dataset.name} as a friend?`, "Remove"))) { b.disabled = false; return; }
         await removeFriendship(b.dataset.remove);
       }
       reload();

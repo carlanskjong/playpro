@@ -129,3 +129,22 @@ export function openDialog(html, wire) {
   dialog.showModal();
   return dialog;
 }
+
+// In-app "Are you sure?" box. Resolves to true when the person confirms.
+export function confirmDialog(message, okLabel = "Yes") {
+  return new Promise((resolve) => {
+    let answer = false;
+    const dialog = openDialog(
+      `<h2>${esc(message)}</h2>
+       <div class="button-row">
+         <button class="btn btn-danger" data-ok>${esc(okLabel)}</button>
+         <button class="btn btn-ghost" data-cancel>Cancel</button>
+       </div>`,
+      (d, close) => {
+        d.querySelector("[data-ok]").addEventListener("click", () => { answer = true; close(); });
+        d.querySelector("[data-cancel]").addEventListener("click", close);
+      },
+    );
+    dialog.addEventListener("close", () => resolve(answer));
+  });
+}
