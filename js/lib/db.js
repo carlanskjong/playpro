@@ -2,7 +2,11 @@
 import config from "../config.js";
 import { state, entryKey } from "./state.js";
 
-export const sb = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY, {
+// Accept the address with or without extras like "/rest/v1/" (as shown on
+// Supabase's Data API page).
+const supabaseUrl = config.SUPABASE_URL.trim().replace(/\/(rest|auth)\/v1\/?$/, "").replace(/\/+$/, "");
+
+export const sb = window.supabase.createClient(supabaseUrl, config.SUPABASE_ANON_KEY.trim(), {
   auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 

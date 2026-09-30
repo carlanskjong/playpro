@@ -13,8 +13,8 @@ import { createGunzip } from "node:zlib";
 import { Readable } from "node:stream";
 import readline from "node:readline";
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
-const KEY = process.env.SUPABASE_SERVICE_KEY || "";
+const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim().replace(/\/(rest|auth)\/v1\/?$/, "").replace(/\/+$/, "");
+const KEY = (process.env.SUPABASE_SERVICE_KEY || "").trim();
 const MIN_VOTES = Number(process.env.MIN_VOTES || 1000);
 const IMDB_URL = process.env.IMDB_URL || "https://datasets.imdbws.com/title.ratings.tsv.gz";
 const WIKIDATA_URL = process.env.WIKIDATA_URL || "https://query.wikidata.org/sparql";

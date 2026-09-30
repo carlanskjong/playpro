@@ -7,7 +7,7 @@
 
 export default {
   // Supabase -> Project Settings -> API (use the "anon" / "publishable" key)
-  SUPABASE_URL: "https://ehcvlvcmvexyyqxbkyoo.supabase.co/rest/v1/",
+  SUPABASE_URL: "https://ehcvlvcmvexyyqxbkyoo.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_CGmxmSKaOcWiyAXRtqvvdQ_TirSNK82",
 
   // themoviedb.org -> Settings -> API -> "API Key"
