@@ -131,6 +131,11 @@ async function applySession(session) {
   return before !== after;
 }
 
+// No pinch-zoom: iPhones ignore "user-scalable=no" in index.html, so stop
+// Safari's pinch gesture here. Remove these two lines to allow zooming again.
+document.addEventListener("gesturestart", (e) => e.preventDefault());
+document.addEventListener("gesturechange", (e) => e.preventDefault());
+
 // A feature or the settings page changed the name or picture: redraw the header.
 window.addEventListener("playpro:profile-changed", () => renderChrome(parseHash().path));
 

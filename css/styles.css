@@ -44,7 +44,15 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--topbar-h) + 12px); }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--topbar-h) + 12px);
+  /* Never let anything make the page wider than the screen (a wider page
+     makes phones zoom out). "clip" keeps the sticky top bar working. */
+  overflow-x: clip;
+  /* No double-tap zoom; taps also respond faster. */
+  touch-action: manipulation;
+}
 
 body {
   margin: 0;
@@ -60,7 +68,9 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  overflow-wrap: break-word;
 }
+@supports (overflow-x: clip) { body { overflow-x: clip; } }
 
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
@@ -210,7 +220,11 @@ main { outline: none; }
 .avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .picture-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
 .picture-row .button-row { margin-top: 0; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.visually-hidden, input.visually-hidden {
+  position: absolute !important; width: 1px !important; height: 1px !important; min-height: 0 !important;
+  padding: 0 !important; margin: -1px !important; border: 0 !important;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
 
 /* ---------- hero ---------- */
 
@@ -406,7 +420,7 @@ a.card:active .poster { transform: scale(0.98); }
 .wtw-group h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; }
 .providers { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .provider {
-  position: relative; display: flex; align-items: center; gap: 10px;
+  position: relative; display: flex; align-items: center; gap: 10px; max-width: 100%; min-width: 0;
   padding: 6px 14px 6px 6px; border-radius: 14px;
   background: var(--surface); border: 1px solid var(--border);
   font-weight: 600; font-size: 0.9rem;
@@ -493,7 +507,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .svc-chip img { width: 30px; height: 30px; border-radius: 99px; }
 .svc-chip.on { border-color: var(--accent); background: var(--accent-soft); }
 .selects { display: flex; gap: 10px; }
-.selects select { width: auto; flex: 1; max-width: 240px; border-radius: 99px; }
+.selects select { width: auto; flex: 1; min-width: 0; max-width: 240px; border-radius: 99px; }
 
 /* ---------- panels & settings ---------- */
 
@@ -521,8 +535,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 /* ---------- friends ---------- */
 
 .people { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.person-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; background: var(--surface); }
+.person-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px; border-radius: 12px; background: var(--surface); }
+.person-row .user-link { min-width: 0; overflow-wrap: anywhere; }
 .two-col { display: grid; gap: 8px 32px; }
+.two-col > * { min-width: 0; }
 @media (min-width: 900px) { .two-col { grid-template-columns: 1fr 340px; } }
 
 .feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
