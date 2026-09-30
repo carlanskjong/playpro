@@ -47,6 +47,11 @@ create table if not exists public.profiles (
 create unique index if not exists profiles_username_lower
   on public.profiles (lower(username));
 
+-- Optional profile picture: a small square photo (about 15 KB), stored as
+-- text so it is deleted and exported together with the rest of the profile.
+alter table public.profiles add column if not exists avatar text
+  check (avatar is null or (char_length(avatar) <= 100000 and avatar like 'data:image/%'));
+
 -- Watchlist items and seen/rated titles.
 create table if not exists public.entries (
   user_id     uuid not null references public.profiles (id) on delete cascade,
@@ -195,14 +200,18 @@ alter table public.profiles    enable row level security;
 alter table public.entries     enable row level security;
 alter table public.friendships enable row level security;
 
--- Users may only change these profile columns (not their id).
-revoke update on public.profiles from anon, authenticated;
-grant  update (username, services) on public.profiles to authenticated;
--- The only thing you can change on a friendship is accepting it.
-revoke update on public.friendships from anon, authenticated;
-grant  update (status) on public.friendships to authenticated;
+-- Grant exactly what the app needs. (Newer Supabase projects grant nothing
+-- by default, older ones grant everything; this works the same for both.)
 -- Visitors who are not logged in get nothing.
-revoke all on public.profiles, public.entries, public.friendships from anon;
+grant usage on schema public to anon, authenticated;
+revoke all on public.profiles, public.entries, public.friendships from anon, authenticated;
+grant select on public.profiles to authenticated;
+-- Users may only change these profile columns (not their id).
+grant update (username, services, avatar) on public.profiles to authenticated;
+grant select, insert, update, delete on public.entries to authenticated;
+grant select, insert, delete on public.friendships to authenticated;
+-- The only thing you can change on a friendship is accepting it.
+grant update (status) on public.friendships to authenticated;
 
 -- ratings: signed-in members can read; only the import job (which uses the
 -- secret key and skips these rules) can write

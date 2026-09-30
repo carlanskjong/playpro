@@ -207,6 +207,10 @@ main { outline: none; }
   color: #fff; font-weight: 800; font-size: 0.95rem; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 .avatar-xl { width: 72px; height: 72px; font-size: 1.8rem; }
+.avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.picture-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+.picture-row .button-row { margin-top: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- hero ---------- */
 

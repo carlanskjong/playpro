@@ -47,7 +47,11 @@ export default async function settingsView({ el }) {
     e.preventDefault();
     const username = new FormData(e.target).get("username").trim();
     try {
+      const before = p.username;
       await updateProfile({ username });
+      const picture = state.avatars.get(before);
+      if (picture) { state.avatars.delete(before); state.avatars.set(username, picture); }
+      window.dispatchEvent(new Event("playpro:profile-changed"));
       toast("Username saved", "good");
       settingsView({ el });
     } catch (err) {

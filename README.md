@@ -59,6 +59,8 @@ You'll create two free accounts (TMDB and Supabase), copy some keys, and switch 
    - the **anon / publishable** key: this one goes in the app
    - the **secret / service_role** key: this one goes **only** into GitHub in the next step, never in the app
 
+> **Set up before 30 September 2026?** Also run [`supabase/update-2026-09-30.sql`](supabase/update-2026-09-30.sql) the same way. It fixes "permission denied" errors on newer Supabase projects and adds profile pictures. Running it twice does no harm.
+
 ### Step 3: Switch on the weekly ratings import (IMDb + Rotten Tomatoes)
 
 A small job on GitHub (free) copies IMDb ratings and Rotten Tomatoes scores into your database twice a week. As a bonus, this keeps your free Supabase project from going to sleep.
@@ -118,7 +120,7 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 
 **Built in:**
 - Data stays in the EU (Supabase EU region).
-- Minimal data: email, username, services, lists and ratings. No real names, photos or location.
+- Minimal data: email, username, services, lists and ratings, plus an optional small profile picture. No real names or location.
 - Invite-only sign-up with a consent checkbox that links to the privacy notice (in the app at `#/privacy`).
 - Your data is private by default: only accepted friends see your ratings; other members only see your username.
 - **Download my data** (right of access/portability) and **Delete my account** (right to erasure) buttons in Settings.

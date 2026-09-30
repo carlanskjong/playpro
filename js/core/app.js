@@ -125,10 +125,14 @@ async function applySession(session) {
   if (!after && before) {
     state.profile = null;
     state.entries.clear();
+    state.avatars.clear();
     for (const fn of slot("onLogout")) fn();
   }
   return before !== after;
 }
+
+// A feature or the settings page changed the name or picture: redraw the header.
+window.addEventListener("playpro:profile-changed", () => renderChrome(parseHash().path));
 
 async function start() {
   if (configured) {

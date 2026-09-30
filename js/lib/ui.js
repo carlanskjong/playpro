@@ -1,6 +1,6 @@
 // Small building blocks used by every screen.
 import { img } from "./tmdb.js";
-import { myEntry } from "./state.js";
+import { state, myEntry } from "./state.js";
 
 export function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -79,11 +79,22 @@ export function empty(title, text, action = "") {
   return `<div class="empty"><h3>${esc(title)}</h3><p>${text}</p>${action}</div>`;
 }
 
-// Coloured circle with the first letter of a username.
+// Round profile picture, or a coloured circle with the first letter.
 export function avatar(username = "?", size = "") {
+  username = username || "?";
   let hash = 0;
   for (const c of username) hash = (hash * 31 + c.charCodeAt(0)) % 360;
-  return `<span class="avatar ${size}" style="--h:${hash}" aria-hidden="true">${esc(username.charAt(0).toUpperCase())}</span>`;
+  const picture = state.avatars.get(username);
+  const inner = picture ? `<img src="${esc(picture)}" alt="">` : esc(username.charAt(0).toUpperCase());
+  return `<span class="avatar ${size}" style="--h:${hash}" data-user="${esc(username)}" aria-hidden="true">${inner}</span>`;
+}
+
+// Redraw every avatar of one person on the page (after a new picture).
+export function refreshAvatars(username) {
+  document.querySelectorAll(`.avatar[data-user="${CSS.escape(username)}"]`).forEach((el) => {
+    const size = [...el.classList].find((c) => c.startsWith("avatar-")) || "";
+    el.outerHTML = avatar(username, size);
+  });
 }
 
 export function toast(message, kind = "info") {

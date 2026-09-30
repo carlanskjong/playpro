@@ -28,6 +28,7 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 | `search` | **Search** page | – |
 | `mylist` | Watchlist and Rate buttons, **My list** page, "Your watchlist" row, badges on posters | – |
 | `friends` | **Friends** page, profiles, feed row, friends' ratings on titles | `mylist` (ratings come from there) |
+| `profilepicture` | Upload a profile picture in Settings, shown instead of the letter everywhere | – |
 | `imdb` | IMDb rating on posters and title pages, link to IMDb | the ratings import (README step 3) |
 | `rottentomatoes` | Rotten Tomatoes score chip with date, link to RT | the ratings import (README step 3) |
 

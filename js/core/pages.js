@@ -17,11 +17,11 @@ export function privacyView({ el }) {
       <h2>What we store</h2>
       <ul>
         <li><strong>Account:</strong> your email address and password. The password is stored scrambled (hashed), so nobody can read it.</li>
-        <li><strong>Profile:</strong> your username and which streaming services you have.</li>
+        <li><strong>Profile:</strong> your username, which streaming services you have, and a profile picture if you choose to add one (shrunk to a small square before it's saved).</li>
         <li><strong>Your activity:</strong> titles on your watchlist, titles you've seen, your ratings and short reviews.</li>
         <li><strong>Friends:</strong> who you've sent or accepted friend requests to.</li>
       </ul>
-      <p>We never ask for your real name, birthday, location or photos.</p>
+      <p>We never ask for your real name, birthday or location. A profile picture is optional, and you can remove it at any time in Settings.</p>
 
       <h2>Why, and on what basis</h2>
       <p>Only to run the app you signed up for: logging you in, keeping your lists, and sharing ratings with the friends you choose
@@ -29,7 +29,7 @@ export function privacyView({ el }) {
 
       <h2>Who can see what</h2>
       <ul>
-        <li>Other members can see your <strong>username</strong> so they can send you a friend request.</li>
+        <li>Other members can see your <strong>username</strong> and <strong>profile picture</strong> so they can find you and send you a friend request.</li>
         <li>Only <strong>friends you have accepted</strong> can see your lists, ratings and reviews.</li>
         <li>Nobody else can see your email address.</li>
       </ul>
