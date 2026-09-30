@@ -219,6 +219,7 @@ alter table public.imdb_ratings enable row level security;
 alter table public.rt_scores    enable row level security;
 revoke all on public.imdb_ratings, public.rt_scores from anon, authenticated;
 grant  select on public.imdb_ratings, public.rt_scores to authenticated;
+grant  select, insert, update, delete on public.imdb_ratings, public.rt_scores to service_role;
 
 drop policy if exists "imdb_ratings: members can read" on public.imdb_ratings;
 create policy "imdb_ratings: members can read" on public.imdb_ratings

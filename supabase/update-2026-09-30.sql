@@ -3,6 +3,7 @@
 --  - fixes "permission denied for table profiles" on newer Supabase
 --    projects, which don't give the app access to tables by default
 --  - adds the profile picture column
+--  - lets the weekly ratings import save IMDb and Rotten Tomatoes scores
 --
 -- HOW TO USE: Supabase (your playpro project) -> SQL Editor -> New query,
 -- paste this whole file, press Run. Safe to run more than once.
@@ -19,3 +20,4 @@ grant update (username, services, avatar) on public.profiles to authenticated;
 grant select, insert, update, delete on public.entries to authenticated;
 grant select, insert, delete on public.friendships to authenticated;
 grant update (status) on public.friendships to authenticated;
+grant select, insert, update, delete on public.imdb_ratings, public.rt_scores to service_role;
