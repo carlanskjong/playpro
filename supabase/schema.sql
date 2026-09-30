@@ -19,6 +19,8 @@ create table if not exists private.settings (
   key   text primary key,
   value text not null
 );
+-- Extra lock: nobody but the database itself may read it.
+alter table private.settings enable row level security;
 
 -- Friends need this code to create an account. Leave it empty ('') to let
 -- anyone who finds your site sign up (not recommended).
