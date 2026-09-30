@@ -7,11 +7,11 @@
 
 export default {
   // Supabase -> Project Settings -> API (use the "anon" / "publishable" key)
-  SUPABASE_URL: "https://YOUR-PROJECT-ID.supabase.co",
-  SUPABASE_ANON_KEY: "YOUR-SUPABASE-ANON-OR-PUBLISHABLE-KEY",
+  SUPABASE_URL: "https://ehcvlvcmvexyyqxbkyoo.supabase.co/rest/v1/",
+  SUPABASE_ANON_KEY: "sb_publishable_CGmxmSKaOcWiyAXRtqvvdQ_TirSNK82",
 
   // themoviedb.org -> Settings -> API -> "API Key"
-  TMDB_API_KEY: "YOUR-TMDB-API-KEY",
+  TMDB_API_KEY: "ccf2943bb1806ea8b4812c2a88e67dab",
 
   // "Where to watch" data is for this country (Norway)
   COUNTRY: "NO",
@@ -20,6 +20,6 @@ export default {
   LANGUAGE: "en-US",
 
   // Shown in the privacy notice. People must be able to contact you.
-  OWNER_NAME: "Your Name",
-  OWNER_EMAIL: "you@example.com",
+  OWNER_NAME: "Carl-Andreas Skjong",
+  OWNER_EMAIL: "carlan.skjong@gmail.com",
 };
