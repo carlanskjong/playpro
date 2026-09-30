@@ -20,7 +20,11 @@ function check({ data, error }) {
 // ---------- account ----------
 
 export async function signUp({ email, password, username, inviteCode }) {
-  const available = check(await sb.rpc("username_available", { name: username }));
+  const lookup = await sb.rpc("username_available", { name: username });
+  if (lookup.error && (lookup.error.code === "PGRST202" || /schema cache/i.test(lookup.error.message))) {
+    throw new Error("The database isn't set up yet. Run supabase/schema.sql in the SQL Editor of your Playpro Supabase project (README, step 2).");
+  }
+  const available = check(lookup);
   if (!available) throw new Error("That username is taken. Try another one.");
   const { data, error } = await sb.auth.signUp({
     email,
