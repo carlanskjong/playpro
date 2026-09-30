@@ -1,6 +1,6 @@
 // Service worker: makes Playpro installable and load fast / offline.
 // Bump VERSION when you want every phone to drop its old cached copy.
-const VERSION = "playpro-v1";
+const VERSION = "playpro-v2";
 const SHELL = [
   "./",
   "index.html",
@@ -52,11 +52,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // The app's own files: network first so updates show up at once,
-  // falling back to the cached copy when offline.
+  // The app's own files: always ask the server for the newest version
+  // ("no-cache" skips the browser's 10-minute copy), falling back to the
+  // cached copy only when offline.
   if (url.origin === self.location.origin) {
+    const fresh = req.mode === "navigate"
+      ? new Request(req.url, { cache: "no-cache", credentials: "same-origin" })
+      : new Request(req, { cache: "no-cache" });
     event.respondWith(
-      fetch(req)
+      fetch(fresh)
         .then((res) => {
           if (res.ok) {
             const copy = res.clone();
