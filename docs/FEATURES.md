@@ -23,14 +23,24 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 
 | Feature | Adds | Depends on |
 |---|---|---|
-| `streaming` | "Where to watch in Norway", "On Netflix" chip, service picker in Settings, "Popular on your services" rows, **Browse** page | – |
-| `discover` | Home banner, trending rows, cast, "More like this" | – |
+| `tonight` | "What should we watch tonight?" ticket on the home screen: picks from both your watchlists, with "Another one" | `mylist`; best with `friends` and `streaming` |
+| `nowstreaming` | "New on your services" row and a badge on watchlist posters that are streaming on your services | `mylist`, `streaming` |
+| `streaming` | "Where to watch in Norway", "On Netflix" chip, service picker in Settings, "Popular on your services", **Browse** page (with an IMDb 7+ filter when `imdb` is on) | – |
+| `discover` | Rotating home banner, trending rows, cast, "More like this" | – |
+| `recommendations` | "Picked for you", based on what you rated 8 or higher | `mylist` |
+| `upcoming` | "Coming to cinemas in Norway" and "Newest on your services" | – |
 | `search` | **Search** page | – |
 | `mylist` | Watchlist and Rate buttons, **My list** page, "Your watchlist" row, badges on posters | – |
-| `friends` | **Friends** page, profiles, feed row, friends' ratings on titles | `mylist` (ratings come from there) |
+| `lists` | Your own lists ("Best of 2026"), visible to your friends | `mylist` |
+| `stats` | **Your year**: titles per month, hours, genres, favourites | `mylist` |
+| `importer` | Import your ratings from an IMDb or Letterboxd CSV export (Settings) | `mylist` |
+| `friends` | **Friends** page, profiles, feed row, friends' ratings on titles, reactions and comments | `mylist` |
+| `share` | Share button on title pages (phone share sheet, or copies the link) | – |
 | `profilepicture` | Upload a profile picture in Settings, shown instead of the letter everywhere | – |
 | `imdb` | IMDb rating on posters and title pages, link to IMDb | the ratings import (README step 3) |
 | `rottentomatoes` | Rotten Tomatoes score chip with date, link to RT | the ratings import (README step 3) |
+
+Features that depend on another one simply hide their links when the other is switched off.
 
 ## Add a new feature
 
@@ -50,30 +60,42 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 | `titleSections` | A section on the title page | same |
 | `settingsSections` | A box on the Settings page | same |
 | `onLogin` / `onLogout` | Code that runs when someone signs in or out | `async () => {…}` |
+| `exportData` | Extra data for "Download my data" | `async () => ({ my_table: rows })` |
 
-`order` decides the position (lower = higher up). Current home order: banner 0, friends 10, your services 20, trending 30, watchlist 40.
+`order` decides the position (lower = higher up). Current home order: tonight 0, new on your services 10, banner 20, popular on your services 30, newest on your services 35, friends 40, picked for you 50, trending 60, cinemas 75, watchlist 80.
 
 `render` returns HTML text. Return `""` to show nothing. `wire(box)` runs afterwards so you can add click handlers inside `box`. If a feature crashes, only its own box disappears; the rest of the page keeps working.
 
+Big pages should load their code only when opened: `routes: [{ path: /^\/party$/, view: lazy(() => import("./page.js")) }]`, where `page.js` has `export default async function ({ el }) {…}`. The template shows how.
+
+### Text and language
+
+Write every text in English inside `t("…")` and add the Norwegian version to `js/lib/nb.js`. For counts use `plural(n, "{n} friend", "{n} friends")`. `npm test` fails if a Norwegian version is missing.
+
 ### Useful helpers
 
-- `js/lib/tmdb.js`: `trending`, `search`, `discover`, `details`, `providers`, `img(path, size)`
+- `js/lib/tmdb.js`: `trending`, `search`, `discover`, `details`, `recommendations`, `upcoming`, `providers`, `img(path, size)`; answers are cached on the phone
 - `js/lib/db.js`: everything that reads or writes Supabase
-- `js/lib/ui.js`: `card`, `row`, `grid`, `icon`, `toast`, `openDialog`, `esc` (**always** wrap text from users or TMDB in `esc(...)`)
+- `js/lib/ui.js`: `card`, `row`, `grid`, `empty`, `icon`, `drawing`, `toast`, `openDialog`, `esc` (**always** wrap text from users or TMDB in `esc(...)`)
+- `js/lib/i18n.js`: `t`, `plural`, `num`, `date`
+- `js/core/registry.js`: `register`, `lazy`, `hasRoute`
 - `js/lib/state.js`: who is logged in (`state.session`, `state.profile`) and their list
 
 ### If a feature needs to store new data
 
-1. Add a table in Supabase (SQL Editor). **Always** turn on Row Level Security and add policies; copy the pattern from `supabase/schema.sql`.
-2. Add the functions that read and write it to the feature itself, or to `js/lib/db.js`.
-3. Include the new data in `exportMyData()` in `js/lib/db.js`, and make sure it's deleted with the account (`on delete cascade`).
-4. Add a line to the privacy notice in `js/core/pages.js`.
+1. Add the table to `supabase/schema.sql`, written so the file can be run again (`create table if not exists`, `drop policy if exists` before `create policy`). **Always** turn on Row Level Security, add policies and grants; copy the pattern of the `lists` table.
+2. Run the whole file again in Supabase (SQL Editor → paste → Run). Your data stays.
+3. Add the functions that read and write it to the feature itself, or to `js/lib/db.js`.
+4. Add the data to "Download my data" with the `exportData` slot, and make sure it's deleted with the account (`on delete cascade`).
+5. Add a line to the privacy notice in `js/core/pages.js`.
+6. Add checks to `tests/db.test.mjs` and teach the fake backend (`demo/mock.js`) about the table.
+
+## Checking your changes
+
+`npm test` checks translations, the database rules and clicks through the whole app in a headless browser. GitHub runs it on every push: a green tick on the commit means all is well, a red cross shows what broke.
 
 ## Ideas for later
 
-- **Leaving soon / new this week in Norway:** TMDB `discover` sorted by date, per service
 - **Watch party:** friends vote on what to watch Friday
-- **Lists:** "Best of 2026", shareable with friends
-- **Import your own IMDb ratings:** IMDb lets you export your ratings as a CSV; a feature could read that file
-- **Sort Browse by IMDb score:** the ratings are in your database now, so a feature could re-sort what TMDB returns
-- **Norwegian language:** set `LANGUAGE: "nb-NO"` in `config.js` for Norwegian titles and descriptions (the app's own buttons stay English until translated)
+- **Leaving soon:** JustWatch knows, but TMDB doesn't pass it on yet
+- **Series tracking:** which episode you're on

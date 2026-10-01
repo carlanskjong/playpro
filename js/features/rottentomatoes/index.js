@@ -8,21 +8,22 @@
 import { register } from "../../core/registry.js";
 import { sb } from "../../lib/db.js";
 import { esc } from "../../lib/ui.js";
+import { t, date } from "../../lib/i18n.js";
 
-const month = (iso) => new Date(iso).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+const month = (iso) => date(iso, { month: "short", year: "numeric" });
 
 const rtChip = {
   order: 12,
-  render: async ({ data }) => {
-    const id = data.imdb_id || data.external_ids?.imdb_id;
+  render: async ({ item }) => {
+    const id = item.imdbId;
     if (!id) return "";
     const { data: rows, error } = await sb.from("rt_scores").select("score, as_of, rt_id").eq("imdb_id", id).limit(1);
     if (error) throw error;
     const r = rows[0];
     if (!r) return "";
     const fresh = r.score >= 60;
-    const label = `<b class="${fresh ? "rt-fresh" : "rt-rotten"}" aria-hidden="true"></b>${r.score}%<small>${r.as_of ? `RT · ${month(r.as_of)}` : "RT"}</small>`;
-    const title = `Rotten Tomatoes Tomatometer${r.as_of ? ` as of ${month(r.as_of)}` : ""}, via Wikidata`;
+    const label = `<b class="${fresh ? "rt-fresh" : "rt-rotten"}" aria-hidden="true"></b>${r.score} %<small>${esc(r.as_of ? t("RT, {date}", { date: month(r.as_of) }) : "RT")}</small>`;
+    const title = esc(r.as_of ? t("Rotten Tomatoes critics score from {date}, via Wikidata", { date: month(r.as_of) }) : t("Rotten Tomatoes critics score, via Wikidata"));
     return r.rt_id
       ? `<a class="chip chip-rt" href="https://www.rottentomatoes.com/${esc(r.rt_id)}" target="_blank" rel="noopener" title="${title}">${label}</a>`
       : `<span class="chip chip-rt" title="${title}">${label}</span>`;

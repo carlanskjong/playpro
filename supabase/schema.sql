@@ -5,7 +5,10 @@
 -- project!), open "SQL Editor" -> "New query", paste this whole file,
 -- change the invite code on the line marked  <-- CHANGE ME  and press Run.
 --
--- It is safe to run this file again later; it only adds what is missing.
+-- UPDATING: when Playpro gets new features, paste and run this whole file
+-- again. It only adds what is missing; your data and invite code stay as
+-- they are. (Supabase warns about "destructive operations" because the
+-- file replaces its own rules; choose "Run this query".)
 -- =====================================================================
 
 
@@ -66,6 +69,10 @@ create table if not exists public.entries (
   updated_at  timestamptz not null default now(),
   primary key (user_id, media_type, tmdb_id)
 );
+-- IMDb id of the title (saves a lookup) and when you watched it (statistics).
+alter table public.entries add column if not exists imdb_id text check (imdb_id ~ '^tt[0-9]+$');
+alter table public.entries add column if not exists watched_at timestamptz;
+update public.entries set watched_at = updated_at where status = 'seen' and watched_at is null;
 create index if not exists entries_title_idx   on public.entries (media_type, tmdb_id);
 create index if not exists entries_updated_idx on public.entries (updated_at desc);
 
@@ -81,6 +88,54 @@ create table if not exists public.friendships (
 create unique index if not exists friendships_pair_idx
   on public.friendships (least(requester, addressee), greatest(requester, addressee));
 create index if not exists friendships_addressee_idx on public.friendships (addressee);
+
+
+-- Your own lists ("Christmas films"). Friends can see lists marked shared.
+create table if not exists public.lists (
+  id         uuid primary key default gen_random_uuid(),
+  owner      uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  name       text not null check (char_length(name) between 1 and 60),
+  shared     boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create index if not exists lists_owner_idx on public.lists (owner);
+
+create table if not exists public.list_items (
+  list_id     uuid not null references public.lists (id) on delete cascade,
+  media_type  text not null check (media_type in ('movie', 'tv')),
+  tmdb_id     integer not null,
+  title       text not null check (char_length(title) <= 300),
+  poster_path text check (char_length(poster_path) <= 100),
+  year        text check (char_length(year) <= 4),
+  added_at    timestamptz not null default now(),
+  primary key (list_id, media_type, tmdb_id)
+);
+
+-- Comments and reactions on a rating/review (an entry).
+create table if not exists public.comments (
+  id          uuid primary key default gen_random_uuid(),
+  entry_user  uuid not null,
+  media_type  text not null,
+  tmdb_id     integer not null,
+  author      uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  body        text not null check (char_length(body) between 1 and 500),
+  created_at  timestamptz not null default now(),
+  foreign key (entry_user, media_type, tmdb_id)
+    references public.entries (user_id, media_type, tmdb_id) on delete cascade
+);
+create index if not exists comments_entry_idx on public.comments (entry_user, media_type, tmdb_id);
+
+create table if not exists public.reactions (
+  entry_user  uuid not null,
+  media_type  text not null,
+  tmdb_id     integer not null,
+  author      uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  kind        text not null check (kind in ('like', 'love', 'laugh', 'wow', 'popcorn')),
+  created_at  timestamptz not null default now(),
+  primary key (entry_user, media_type, tmdb_id, author),
+  foreign key (entry_user, media_type, tmdb_id)
+    references public.entries (user_id, media_type, tmdb_id) on delete cascade
+);
 
 
 -- Ratings copied in by the weekly import job (scripts/import-ratings.mjs).
@@ -199,12 +254,17 @@ create trigger playpro_create_profile
 alter table public.profiles    enable row level security;
 alter table public.entries     enable row level security;
 alter table public.friendships enable row level security;
+alter table public.lists       enable row level security;
+alter table public.list_items  enable row level security;
+alter table public.comments    enable row level security;
+alter table public.reactions   enable row level security;
 
 -- Grant exactly what the app needs. (Newer Supabase projects grant nothing
 -- by default, older ones grant everything; this works the same for both.)
 -- Visitors who are not logged in get nothing.
 grant usage on schema public to anon, authenticated;
-revoke all on public.profiles, public.entries, public.friendships from anon, authenticated;
+revoke all on public.profiles, public.entries, public.friendships,
+  public.lists, public.list_items, public.comments, public.reactions from anon, authenticated;
 grant select on public.profiles to authenticated;
 -- Users may only change these profile columns (not their id).
 grant update (username, services, avatar) on public.profiles to authenticated;
@@ -212,6 +272,10 @@ grant select, insert, update, delete on public.entries to authenticated;
 grant select, insert, delete on public.friendships to authenticated;
 -- The only thing you can change on a friendship is accepting it.
 grant update (status) on public.friendships to authenticated;
+grant select, insert, delete on public.lists, public.list_items, public.comments to authenticated;
+grant update (name, shared) on public.lists to authenticated;
+grant select, insert, delete on public.reactions to authenticated;
+grant update (kind) on public.reactions to authenticated;
 
 -- ratings: signed-in members can read; only the import job (which uses the
 -- secret key and skips these rules) can write
@@ -279,3 +343,77 @@ drop policy if exists "friendships: remove" on public.friendships;
 create policy "friendships: remove" on public.friendships
   for delete to authenticated
   using ((select auth.uid()) in (requester, addressee));
+
+-- lists: yours, plus shared lists of your friends; only you change yours
+drop policy if exists "lists: read own or friends' shared" on public.lists;
+create policy "lists: read own or friends' shared" on public.lists
+  for select to authenticated
+  using (owner = (select auth.uid()) or (shared and public.is_friend(owner)));
+
+drop policy if exists "lists: insert own" on public.lists;
+create policy "lists: insert own" on public.lists
+  for insert to authenticated with check (owner = (select auth.uid()));
+
+drop policy if exists "lists: update own" on public.lists;
+create policy "lists: update own" on public.lists
+  for update to authenticated
+  using (owner = (select auth.uid())) with check (owner = (select auth.uid()));
+
+drop policy if exists "lists: delete own" on public.lists;
+create policy "lists: delete own" on public.lists
+  for delete to authenticated using (owner = (select auth.uid()));
+
+-- list items follow their list (the lists rules above decide what you see)
+drop policy if exists "list_items: read visible lists" on public.list_items;
+create policy "list_items: read visible lists" on public.list_items
+  for select to authenticated
+  using (exists (select 1 from public.lists l where l.id = list_id));
+
+drop policy if exists "list_items: change own lists" on public.list_items;
+drop policy if exists "list_items: add to own lists" on public.list_items;
+create policy "list_items: add to own lists" on public.list_items
+  for insert to authenticated
+  with check (exists (select 1 from public.lists l where l.id = list_id and l.owner = (select auth.uid())));
+
+drop policy if exists "list_items: remove from own lists" on public.list_items;
+create policy "list_items: remove from own lists" on public.list_items
+  for delete to authenticated
+  using (exists (select 1 from public.lists l where l.id = list_id and l.owner = (select auth.uid())));
+
+-- comments and reactions: visible to whoever can see the rating; you can
+-- add your own on your ratings or your friends'; remove your own, or any
+-- on your own rating
+drop policy if exists "comments: read" on public.comments;
+create policy "comments: read" on public.comments
+  for select to authenticated
+  using (entry_user = (select auth.uid()) or public.is_friend(entry_user));
+
+drop policy if exists "comments: write own" on public.comments;
+create policy "comments: write own" on public.comments
+  for insert to authenticated
+  with check (author = (select auth.uid()) and (entry_user = (select auth.uid()) or public.is_friend(entry_user)));
+
+drop policy if exists "comments: delete" on public.comments;
+create policy "comments: delete" on public.comments
+  for delete to authenticated
+  using ((select auth.uid()) in (author, entry_user));
+
+drop policy if exists "reactions: read" on public.reactions;
+create policy "reactions: read" on public.reactions
+  for select to authenticated
+  using (entry_user = (select auth.uid()) or public.is_friend(entry_user));
+
+drop policy if exists "reactions: write own" on public.reactions;
+create policy "reactions: write own" on public.reactions
+  for insert to authenticated
+  with check (author = (select auth.uid()) and (entry_user = (select auth.uid()) or public.is_friend(entry_user)));
+
+drop policy if exists "reactions: change own" on public.reactions;
+create policy "reactions: change own" on public.reactions
+  for update to authenticated
+  using (author = (select auth.uid())) with check (author = (select auth.uid()));
+
+drop policy if exists "reactions: delete" on public.reactions;
+create policy "reactions: delete" on public.reactions
+  for delete to authenticated
+  using ((select auth.uid()) in (author, entry_user));

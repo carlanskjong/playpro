@@ -7,7 +7,8 @@
 import { register } from "../../core/registry.js";
 import { state } from "../../lib/state.js";
 import { sb, updateProfile } from "../../lib/db.js";
-import { avatar, refreshAvatars, toast, errorMessage } from "../../lib/ui.js";
+import { esc, avatar, refreshAvatars, toast, errorMessage } from "../../lib/ui.js";
+import { t } from "../../lib/i18n.js";
 
 const SIZE = 256;
 
@@ -26,7 +27,7 @@ async function shrink(file) {
     const img = await new Promise((resolve, reject) => {
       const i = new Image();
       i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("Couldn't read that picture. Try a JPG or PNG."));
+      i.onerror = () => reject(new Error(t("Couldn't read that picture. Try a JPG or PNG.")));
       i.src = url;
     });
     const side = Math.min(img.naturalWidth, img.naturalHeight);
@@ -56,14 +57,14 @@ const pictureSettings = {
     const name = state.profile?.username || "?";
     const has = state.avatars.has(name);
     return `
-      <h2>Profile picture</h2>
-      <p class="muted small">Other members see it next to your name. It's cropped to a square and made small before it's saved.</p>
+      <h2>${esc(t("Profile picture"))}</h2>
+      <p class="muted small">${esc(t("Other members see it next to your name. It's cropped to a square and made small before it's saved."))}</p>
       <div class="picture-row">
         ${avatar(name, "avatar-xl")}
         <div class="button-row">
-          <label class="btn" for="picture-file">${has ? "Change picture" : "Choose picture"}</label>
+          <label class="btn" for="picture-file">${esc(has ? t("Change picture") : t("Choose picture"))}</label>
           <input class="visually-hidden" type="file" id="picture-file" accept="image/*">
-          ${has ? `<button class="btn btn-ghost" type="button" id="picture-remove">Remove</button>` : ""}
+          ${has ? `<button class="btn btn-ghost" type="button" id="picture-remove">${esc(t("Remove picture"))}</button>` : ""}
         </div>
       </div>`;
   },
@@ -72,11 +73,11 @@ const pictureSettings = {
     box.querySelector("#picture-file").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (!file.type.startsWith("image/")) return toast("That file isn't a picture", "bad");
-      if (file.size > 25 * 1024 * 1024) return toast("That picture is too big (over 25 MB)", "bad");
+      if (!file.type.startsWith("image/")) return toast(t("That file isn't a picture"), "bad");
+      if (file.size > 25 * 1024 * 1024) return toast(t("That picture is too big (over 25 MB)"), "bad");
       try {
         await save(await shrink(file));
-        toast("Profile picture saved", "good");
+        toast(t("Profile picture saved"), "good");
         again();
       } catch (err) {
         toast(errorMessage(err), "bad");
@@ -85,7 +86,7 @@ const pictureSettings = {
     box.querySelector("#picture-remove")?.addEventListener("click", async () => {
       try {
         await save(null);
-        toast("Profile picture removed");
+        toast(t("Profile picture removed"));
         again();
       } catch (err) {
         toast(errorMessage(err), "bad");

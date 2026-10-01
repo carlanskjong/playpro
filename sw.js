@@ -1,6 +1,6 @@
 // Service worker: makes Playpro installable and load fast / offline.
 // Bump VERSION when you want every phone to drop its old cached copy.
-const VERSION = "playpro-v2";
+const VERSION = "playpro-v3";
 const SHELL = [
   "./",
   "index.html",
@@ -8,6 +8,8 @@ const SHELL = [
   "manifest.webmanifest",
   "icons/icon.svg",
   "js/vendor/supabase.js",
+  "fonts/anybody.woff2",
+  "fonts/familjen-grotesk.woff2",
 ];
 const IMAGES = "playpro-images";
 const MAX_IMAGES = 400;

@@ -15,11 +15,16 @@
 //   settingsSections sections on the settings page:  same shape
 //   onLogin          async functions run after sign-in (e.g. load data)
 //   onLogout         functions run after sign-out
+//   exportData       async () => ({ name: rows }) added to "Download my data"
+//
+// Big pages can load their code only when opened: view: lazy(() => import("./page.js"))
 
 const slots = {
   routes: [], nav: [], homeRows: [], titleInfo: [], titleActions: [],
-  titleSections: [], settingsSections: [], onLogin: [], onLogout: [],
+  titleSections: [], settingsSections: [], onLogin: [], onLogout: [], exportData: [],
 };
+
+export const lazy = (load) => async (ctx) => (await load()).default(ctx);
 
 export function register(feature) {
   for (const [slot, value] of Object.entries(feature)) {
@@ -63,3 +68,7 @@ export async function renderSlot(name, container, ctx, { tag = "div", className 
     }),
   );
 }
+
+// Is there a page at this address? (Lets features link to each other only
+// when the other feature is switched on.)
+export const hasRoute = (path) => slot("routes").some((r) => r.path.test(path));

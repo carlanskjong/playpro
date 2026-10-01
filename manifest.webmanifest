@@ -1,14 +1,14 @@
 {
   "name": "Playpro",
   "short_name": "Playpro",
-  "description": "Where to stream it in Norway, what your friends think, and your own ratings.",
+  "description": "What should we watch tonight? Where it streams in Norway, and what your friends thought of it.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0b0b12",
-  "theme_color": "#0b0b12",
+  "background_color": "#121833",
+  "theme_color": "#121833",
   "lang": "en",
   "categories": ["entertainment", "social"],
   "icons": [

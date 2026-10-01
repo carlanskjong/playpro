@@ -2,11 +2,13 @@
 
 A free, private app for you and your friends that combines the best of **IMDb** (ratings, cast, your own 1–10 scores) and **PlayPilot** (where to stream it **in Norway**, filtered by the services you actually have). It's a PWA, so it installs on phones like a normal app, without any app store.
 
-- **Where to watch in Norway:** Netflix, Max, Viaplay, TV 2 Play, NRK TV, Disney+, Prime Video and others. Your own services are highlighted.
-- **Browse** everything streaming in Norway by service, genre and rating.
+- **What should we watch tonight?** One tap picks something from both your watchlists that's streaming on your services.
+- **Where to watch in Norway:** Netflix, Max, Viaplay, TV 2 Play, NRK TV, Disney+, Prime Video and others. Your own services are highlighted, and you're told when something on your watchlist arrives on one of them.
+- **Browse** everything streaming in Norway by service, genre and IMDb score; see what's coming to Norwegian cinemas.
 - **Ratings:** IMDb score (on every poster), Rotten Tomatoes score, and your friends' average.
-- **Watchlist + "seen it"** with 1–10 ratings and short reviews.
-- **Friends:** friend requests, an activity feed, and friends' reviews on every title.
+- **Watchlist + "seen it"** with 1–10 ratings and short reviews, recommendations from what you loved, your own lists, and **Your year** in numbers. Bring your old ratings from IMDb or Letterboxd.
+- **Friends:** friend requests, an activity feed, friends' reviews on every title, with reactions and comments.
+- **Norsk eller English:** the app follows your phone's language, and you can switch in Settings.
 - **Privacy built in:** invite-only sign-up, no tracking, and buttons to download or delete your own data.
 - **Plug-in features:** switch features on and off with one line (see [docs/FEATURES.md](docs/FEATURES.md)).
 
@@ -59,7 +61,7 @@ You'll create two free accounts (TMDB and Supabase), copy some keys, and switch 
    - the **anon / publishable** key: this one goes in the app
    - the **secret / service_role** key: this one goes **only** into GitHub in the next step, never in the app
 
-> **Set up before 30 September 2026?** Also run [`supabase/update-2026-09-30.sql`](supabase/update-2026-09-30.sql) the same way. It fixes "permission denied" errors on newer Supabase projects and adds profile pictures. Running it twice does no harm.
+> **Updating later:** when Playpro gets new features that store data, run the whole `supabase/schema.sql` again the same way (copy everything, paste, Run). It only adds what's missing; your data and invite code stay. If Supabase warns about "destructive operations", choose **Run this query**: the warning is about the file replacing its own rules.
 
 ### Step 3: Switch on the weekly ratings import (IMDb + Rotten Tomatoes)
 
@@ -90,7 +92,7 @@ Secrets are stored encrypted by GitHub and are never shown in the code or to vis
 1. On GitHub, open this repository → **Settings → Pages**.
 2. Under **Build and deployment**:
    - **Source:** *Deploy from a branch*
-   - **Branch:** `claude/imdb-playpilot-pwa-pvjzp7` (the branch with the app), folder **/ (root)**
+   - **Branch:** `main` (the branch with the app; see *Renaming the branch* below if yours is still called `claude/imdb-playpilot-pwa-pvjzp7`), folder **/ (root)**
 3. Click **Save**. After a minute or two the page shows your address: **https://carlanskjong.github.io/playpro/**
 4. In **Supabase → Authentication → URL Configuration**, set **Site URL** to that address, add it under **Redirect URLs** too, and save.
 
@@ -139,6 +141,19 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 - **Emails (confirm sign-up, "forgot password"):** create a free account at an email service such as [Brevo](https://www.brevo.com) (300 emails/day free) or [Resend](https://resend.com) (3,000/month free). Put its SMTP details in **Supabase → Authentication → Emails → SMTP Settings**. Then you can turn "Confirm email" back on. Remember to list the email service in the privacy notice.
 - **Your own domain:** GitHub → Settings → Pages → Custom domain (the domain itself costs money).
 
+## Renaming the branch to `main` (optional, once)
+
+The app was built on a branch with a long name. To rename it:
+
+1. On GitHub, open this repository → **Settings → General**. Under **Default branch**, click the ✏️ pencil next to `claude/imdb-playpilot-pwa-pvjzp7`, type `main` and click **Rename branch**.
+2. Open **Settings → Pages** and check that **Branch** now says `main`. If not, pick `main` and click **Save**.
+
+Nothing else changes; the address stays the same.
+
+## Checks on every change
+
+Every time something changes on GitHub, an automatic check (**Actions → Check**) clicks through the whole app in an invisible browser, tests the database rules and checks that every text has a Norwegian version. A green tick ✅ next to a commit means everything works; a red cross ❌ means something broke, and GitHub emails you.
+
 ## Adding, removing and changing features
 
 Every feature is a self-contained plug-in in `js/features/`. To remove one, put `//` in front of its line in [`js/features.js`](js/features.js). To add one, copy `js/features/_template`. The full guide is in [docs/FEATURES.md](docs/FEATURES.md).
@@ -150,26 +165,44 @@ index.html               the page that loads the app
 js/config.js             ← your keys and settings (the only file you must edit)
 js/features.js           ← feature on/off switchboard
 js/features/             one folder per feature
+  tonight/               "What should we watch tonight?"
+  nowstreaming/          watchlist titles that arrived on your services
   streaming/             Norway: where to watch, your services, Browse page
   discover/              home banner, trending, cast, "more like this"
+  recommendations/       "Picked for you"
+  upcoming/              cinemas in Norway, newest on your services
   search/                search page
   mylist/                watchlist, ratings, reviews
-  friends/               friends, feed, profiles
+  lists/                 your own lists
+  stats/                 "Your year"
+  importer/              import ratings from IMDb or Letterboxd
+  friends/               friends, feed, profiles, comments and reactions
+  share/                 share button
+  profilepicture/        profile pictures
   imdb/                  IMDb ratings on posters and title pages
   rottentomatoes/        Rotten Tomatoes score (via Wikidata)
   _template/             copy this to make a new feature
 js/core/                 the app's frame: navigation, home, title page, settings, login, privacy
-js/lib/                  helpers: TMDB, Supabase, shared UI pieces
+js/lib/                  helpers: TMDB, Supabase, shared UI pieces, icons
+js/lib/nb.js             all Norwegian texts
 css/styles.css           all styling; colours are at the top
-supabase/schema.sql      database setup (run once in Supabase)
+fonts/                   the two typefaces (free, self-hosted)
+docs/DESIGN.md           the design plan
+supabase/schema.sql      database setup (run it again to update)
 scripts/import-ratings.mjs          the IMDb + Rotten Tomatoes import
 .github/workflows/import-ratings.yml runs the import twice a week
+.github/workflows/check.yml          the automatic check on every change
+tests/                   the checks themselves
+demo/                    the clickable demo with made-up data
 sw.js, manifest.webmanifest, icons/   what makes it an installable app
+CLAUDE.md                notes for Claude when working on the code
 ```
 
 ## Trying it on your own computer (optional)
 
 In a terminal in this folder, run `python3 -m http.server 8000` and open <http://localhost:8000>. Add `http://localhost:8000` to Supabase's Redirect URLs first.
+
+To run the checks yourself (needs [Node.js](https://nodejs.org)): `npm install`, `npx playwright install chromium`, then `npm test`. `npm run demo` builds the demo with made-up data into `demo/dist/`.
 
 ## Credits
 

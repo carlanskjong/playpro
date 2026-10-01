@@ -1,0 +1,17 @@
+{
+  "name": "playpro",
+  "private": true,
+  "type": "module",
+  "description": "Playpro: where to stream it in Norway, with friends' ratings. The app itself needs no build step; these tools are only for checks and the demo.",
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "test:db": "node tests/db.test.mjs",
+    "test:app": "node tests/app.test.mjs",
+    "demo": "node demo/build.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.0",
+    "esbuild": "^0.25.0",
+    "playwright": "1.56.1"
+  }
+}
