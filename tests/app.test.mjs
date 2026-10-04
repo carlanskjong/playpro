@@ -99,6 +99,7 @@ console.log("Phone pages");
   const { page, errors, context } = await open();
   const pages = [
     ["/", ".ticket"], ["/movie/693134", ".title-name"], ["/tv/64439", ".title-name"], ["/browse", ".grid"],
+    ["/browse/cinema", "#cinema-soon .premiere-month"], ["/browse/coming", "#coming-series .premiere-month"], ["/movie/900001", ".title-name"],
     ["/search?q=dune", ".grid"], ["/list", ".grid"], ["/list?tab=seen", ".grid"], ["/lists", ".list-grid"],
     ["/stats", ".chart"], ["/friends", ".feed"], ["/u/anna", ".grid"], ["/settings", ".services"],
     ["/privacy", ".prose"], ["/about", ".prose"],
@@ -107,7 +108,7 @@ console.log("Phone pages");
     try {
       await visit(page, hash, sel);
       await fitsScreen(page, hash);
-      await page.screenshot({ path: join(out, `phone${hash.replace(/[^a-z0-9]+/gi, "-")}.png`), fullPage: hash === "/" || hash.startsWith("/movie") });
+      await page.screenshot({ path: join(out, `phone${hash.replace(/[^a-z0-9]+/gi, "-")}.png`), fullPage: hash === "/" || hash.startsWith("/movie") || hash.startsWith("/browse/") });
       pass(hash);
     } catch (err) { fail(`${hash}: ${err.message.split("\n")[0]}`); }
   }
@@ -187,6 +188,23 @@ console.log("Actions");
   await step("search with the year added", () => searchFinds("Dune part two 2024", "Dune: Part Two", true));
   await step("search with a typo", () => searchFinds("dune prat two", "Dune: Part Two", true));
   await step("search with an IMDb link", () => searchFinds("https://www.imdb.com/title/tt1693134/", "Dune: Part Two"));
+
+  await step("cinema: showing now and premieres", async () => {
+    await visit(page, "/browse/cinema", "#cinema-soon .premiere-month");
+    const now = await page.$$eval("#cinema-now .card-title", (els) => els.map((e) => e.textContent));
+    if (!now.includes("The Odyssey")) throw new Error("showing now: " + now.join(", "));
+    const heads = await page.$$eval("#cinema-soon .month-head time", (els) => els.map((e) => e.getAttribute("datetime")));
+    if (heads.join() !== [...heads].sort().join()) throw new Error("premieres out of order");
+  });
+  await step("film page links to showtimes", async () => {
+    await visit(page, "/movie/900003", "[data-feature=cinema] a[href*='filmweb.no/sok']");
+  });
+  await step("coming: new seasons on your services", async () => {
+    await visit(page, "/browse/coming", "#coming-series .premiere-month");
+    const notes = await page.$$eval("#coming-series .card-meta", (els) => els.map((e) => e.textContent));
+    for (const want of ["Season 4 on Netflix", "Season 5 on NRK TV", "New series on Netflix"]) if (!notes.some((n) => n.startsWith(want))) throw new Error(notes.join(" / "));
+    await page.waitForSelector("#coming-films .card");
+  });
 
   await visit(page, "/stats", ".chart");
   await step("year chart has 12 months and a table", async () => {

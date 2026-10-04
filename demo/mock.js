@@ -3,7 +3,7 @@
 // memory, following the same "who can see what" rules as supabase/schema.sql,
 // so nothing leaves the browser. Loaded before the app (see build.mjs and
 // tests/app.test.mjs).
-import { TITLES, GENRES, PROVIDERS, RT, UPCOMING, byKey, tmdbListItem, tmdbDetails, providerList } from "./data.js";
+import { TITLES, GENRES, PROVIDERS, RT, SOON, COMING_SEASONS, byKey, tmdbListItem, tmdbDetails, providerList, soonItem, releaseDatesOf } from "./data.js";
 
 // ---------- drawn artwork instead of real posters ----------
 
@@ -70,12 +70,12 @@ function person(titleId, k) {
     <text x="92" y="108" text-anchor="middle" font-family="system-ui,sans-serif" font-size="32" font-weight="800" fill="hsl(${h} 40% 80%)">${xml(initials)}</text></svg>`;
 }
 
-const upcomingAsTitle = (u) => ({ ...u, type: "movie", year: u.date.slice(0, 4) });
+const upcomingAsTitle = (u) => ({ type: "movie", ...u, year: u.date.slice(0, 4) });
 
 globalThis.__playproImg = (path) => {
   if (art.has(path)) return art.get(path);
   const [, kind, a, b] = path.split("/");
-  const title = (type, id) => byKey.get(`${type}:${id}`) || upcomingAsTitle(UPCOMING.find((u) => u.id === Number(id)) || { id: 0, title: "?", date: "2026", hue: 0 });
+  const title = (type, id) => byKey.get(`${type}:${id}`) || upcomingAsTitle(SOON.find((u) => u.id === Number(id)) || { id: 0, title: "?", date: "2026", hue: 0 });
   let svg = "";
   if (kind === "poster") svg = poster(title(a, b));
   else if (kind === "backdrop") svg = backdrop(title(a, b));
@@ -301,7 +301,22 @@ function tmdb(path, p) {
     const list = TITLES.filter((t) => m[1] === "all" || t.type === m[1]).sort((a, b) => b.popularity - a.popularity);
     return { results: list.slice(0, 16).map(tmdbListItem) };
   }
-  if ((m = path.match(/^\/discover\/(movie|tv)$/))) return discover(m[1], p);
+  if ((m = path.match(/^\/discover\/(movie|tv)$/))) {
+    const from = p.get("release_date.gte") || p.get("first_air_date.gte") || p.get("air_date.gte");
+    const to = p.get("release_date.lte") || p.get("first_air_date.lte") || p.get("air_date.lte");
+    const within = (d) => d >= from && d <= to;
+    if (p.has("with_release_type")) {
+      const kind = p.get("with_release_type") === "4" ? "digital" : "cinema";
+      return { results: SOON.filter((s) => s.kind === kind && within(s.date)).map(soonItem), total_pages: 1 };
+    }
+    if (p.has("first_air_date.gte")) return { results: SOON.filter((s) => s.kind === "series" && within(s.date)).map(soonItem), total_pages: 1 };
+    if (p.has("air_date.gte")) {
+      const services = (p.get("with_watch_providers") || "").split("|").map(Number);
+      return { results: COMING_SEASONS.map((c) => byKey.get(`tv:${c.id}`)).filter((t) => t.stream.some((x) => services.includes(x))).map(tmdbListItem), total_pages: 1 };
+    }
+    return discover(m[1], p);
+  }
+  if ((m = path.match(/^\/movie\/(\d+)\/release_dates$/))) return releaseDatesOf(Number(m[1]));
   if (path === "/search/multi") {
     const q = norm(p.get("query") || "");
     return { results: TITLES.filter((t) => norm(t.title).includes(q) || t.cast.some(([n]) => norm(n).includes(q))).map(tmdbListItem), total_pages: 1 };
@@ -313,9 +328,6 @@ function tmdb(path, p) {
   if ((m = path.match(/^\/find\/(tt\d+)$/))) {
     const t = TITLES.find((x) => x.imdbId === m[1]);
     return { movie_results: t?.type === "movie" ? [tmdbListItem(t)] : [], tv_results: t?.type === "tv" ? [tmdbListItem(t)] : [] };
-  }
-  if (path === "/movie/upcoming") {
-    return { results: UPCOMING.map((u) => ({ id: u.id, title: u.title, release_date: u.date, poster_path: `/poster/movie/${u.id}`, backdrop_path: null, vote_average: 0, overview: "" })) };
   }
   if ((m = path.match(/^\/genre\/(movie|tv)\/list$/))) return { genres: GENRES[m[1]] };
   if (path.startsWith("/watch/providers/")) return { results: providerList() };
@@ -330,7 +342,14 @@ function tmdb(path, p) {
   }
   if ((m = path.match(/^\/(movie|tv)\/(\d+)$/))) {
     const t = byKey.get(`${m[1]}:${m[2]}`);
-    return t ? tmdbDetails(t) : null;
+    if (t) return tmdbDetails(t);
+    const s = SOON.find((x) => x.id === Number(m[2]) && x.type === m[1]);
+    if (!s) return null;
+    const provider = PROVIDERS.find((x) => x.id === s.provider);
+    return {
+      ...soonItem(s), overview: "A sample title for the demo.", genres: [], credits: { cast: [] }, recommendations: { results: [] }, videos: { results: [] },
+      external_ids: {}, release_dates: releaseDatesOf(s.id), networks: provider ? [{ id: 213, name: provider.name }] : [], "watch/providers": { results: {} },
+    };
   }
   return {};
 }

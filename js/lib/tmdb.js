@@ -149,7 +149,8 @@ export async function discover(type, { providers = [], region, genre, sort = "po
 
 // Everything for a title page in one request.
 export async function details(type, id) {
-  return get(`/${type}/${id}`, { append_to_response: "credits,watch/providers,recommendations,videos,external_ids" });
+  const extra = type === "movie" ? ",release_dates" : "";
+  return get(`/${type}/${id}`, { append_to_response: `credits,watch/providers,recommendations,videos,external_ids${extra}` });
 }
 
 // Just the basics (runtime, genres) – used for statistics.
@@ -166,11 +167,57 @@ export async function watchProviders(type, id) {
   return (await get(`/${type}/${id}/watch/providers`)).results || {};
 }
 
-// Movies coming to cinemas in a country.
-export async function upcoming(region) {
-  const today = new Date().toISOString().slice(0, 10);
-  return list(await get("/movie/upcoming", { region }), "movie").filter((m) => m.date >= today);
+// A day as "2026-10-09", counted from today.
+export const day = (offset = 0) => new Date(Date.now() + offset * 864e5).toISOString().slice(0, 10);
+
+// Run lookups six at a time: quick, without flooding TMDB.
+export async function sixAtATime(items, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const k = next++;
+      out[k] = await fn(items[k]).catch(() => null);
+    }
+  };
+  await Promise.all(Array.from({ length: 6 }, worker));
+  return out;
 }
+
+// Any TMDB "discover" search, over several pages.
+export async function discoverAll(type, params, pages = 1) {
+  const items = [];
+  for (let page = 1; page <= pages; page++) {
+    const data = await get(`/discover/${type}`, { include_adult: "false", ...params, page });
+    items.push(...list(data, type));
+    if (page >= (data.total_pages || 1)) break;
+  }
+  return items;
+}
+
+// Movies opening in a country's cinemas ("cinema") or coming to stream or
+// rent there ("digital") between two days.
+export function releasesIn(region, kind, from, to, sort = "popularity.desc", pages = 2) {
+  return discoverAll("movie", { region, with_release_type: kind === "cinema" ? "2|3" : "4", "release_date.gte": from, "release_date.lte": to, sort_by: sort }, pages);
+}
+
+// The day a movie opens in a country's cinemas (or comes to stream or rent),
+// from TMDB's release dates. Film festival screenings don't count.
+export function pickRelease(releaseDates, region, kind = "cinema") {
+  const types = kind === "cinema" ? [2, 3] : [4];
+  const dates = (releaseDates?.results || []).find((r) => r.iso_3166_1 === region)?.release_dates || [];
+  return dates.filter((d) => types.includes(d.type)).map((d) => d.release_date.slice(0, 10)).sort()[0] || "";
+}
+
+export async function releaseDate(id, region, kind = "cinema") {
+  return pickRelease(await get(`/movie/${id}/release_dates`), region, kind);
+}
+
+// A series with its next episode and where it streams (for "coming soon").
+export function seriesNext(id) {
+  return get(`/tv/${id}`, { append_to_response: "watch/providers" });
+}
+
 
 export async function genres(type) {
   const data = await get(`/genre/${type}/list`);

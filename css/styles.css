@@ -330,6 +330,7 @@ a.card:hover .poster { outline: 2px solid var(--fjord); outline-offset: 2px; }
 .noposter { position: absolute; inset: 0; display: grid; place-items: center; padding: 10px; text-align: center; font-family: var(--display); font-weight: 760; font-stretch: 80%; color: var(--fjord); }
 .card-title { margin-top: 8px; font-weight: 650; font-size: 0.9375rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card-meta { color: var(--fjord); font-size: var(--t-sm); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-meta.wrap { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
 .badge, .score {
   position: absolute; display: inline-flex; align-items: center; gap: 3px;
@@ -488,6 +489,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--l
 .segmented button, .segmented a { border: 0; background: transparent; padding: 7px 16px; border-radius: 99px; font-weight: 650; color: var(--fjord); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .segmented [aria-selected="true"], .segmented [aria-checked="true"] { background: var(--snow); color: var(--night); }
 .segmented [aria-selected="true"] .count { background: var(--night); color: var(--snow); }
+.browse-tabs { margin: 0 0 24px; }
+.premiere-month + .premiere-month { margin-top: 28px; }
+.month-head { font-size: var(--t-md); font-weight: 650; color: var(--fjord); margin: 0 0 12px; }
+.month-head::first-letter { text-transform: uppercase; }
+.cinema-note { margin-top: 32px; max-width: 60ch; }
 
 /* ---------- browse ---------- */
 

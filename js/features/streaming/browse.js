@@ -4,7 +4,7 @@ import { discover, genres, img } from "../../lib/tmdb.js";
 import { ratingsForItems } from "../../lib/ratings.js";
 import { esc, grid, card, skeletonGrid, empty, errorMessage } from "../../lib/ui.js";
 import { t, num } from "../../lib/i18n.js";
-import { COUNTRY, myServices, norwegianProviders } from "./shared.js";
+import { COUNTRY, myServices, norwegianProviders, browseTabs } from "./shared.js";
 
 const MIN_IMDB = 7;
 
@@ -108,6 +108,7 @@ export default async function browseView({ el, query, isCurrent }) {
 
   el.innerHTML = `
     <div class="page-head"><h1>${esc(t("Browse"))}</h1><p class="muted">${esc(t("Everything streaming in Norway, filtered your way."))}</p></div>
+    ${browseTabs("/browse")}
     <div class="filters" id="browse-filters"></div>
     <div id="browse-results"></div>
     <div class="center"><button class="btn" id="browse-more" hidden>${esc(t("Load more"))}</button></div>`;

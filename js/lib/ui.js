@@ -21,7 +21,7 @@ export function posterImg(path, { sizes = "(max-width: 600px) 34vw, 180px", alt 
 }
 
 // Poster card used in rows and grids.
-export function card(item, { note = "" } = {}) {
+export function card(item, { note = "", wrap = false } = {}) {
   const key = `${item.type}:${item.id}`;
   const entry = myEntry(item.type, item.id);
   let badge = "";
@@ -40,7 +40,7 @@ export function card(item, { note = "" } = {}) {
     <a class="card" href="#/${item.type}/${item.id}"${imdbAttr}>
       <div class="poster">${poster}${badge}${streaming}${score}</div>
       <div class="card-title">${esc(item.title)}</div>
-      <div class="card-meta">${note || esc(kindAndYear(item))}</div>
+      <div class="card-meta${wrap ? " wrap" : ""}">${note || esc(kindAndYear(item))}</div>
     </a>`;
 }
 

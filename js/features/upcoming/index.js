@@ -1,18 +1,23 @@
 // FEATURE: Coming up
-//  - movies coming to Norwegian cinemas soon (with the premiere date)
-//  - the newest titles on your streaming services
-import { register } from "../../core/registry.js";
-import { upcoming, discover } from "../../lib/tmdb.js";
+//  - Browse → Coming soon: new seasons and series coming to your services, and films to stream or rent
+//  - "Coming to your services" and "Newest on your services" rows on the home screen
+import { register, lazy } from "../../core/registry.js";
+import { discover } from "../../lib/tmdb.js";
 import { esc, row, card } from "../../lib/ui.js";
 import { t, date } from "../../lib/i18n.js";
 import { COUNTRY, myServices } from "../streaming/shared.js";
+import { comingSeries } from "./soon.js";
 
-const cinemaRow = {
-  order: 75,
+const comingRow = {
+  order: 36,
   render: async () => {
-    const items = (await upcoming(COUNTRY)).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 20);
-    const cards = items.map((i) => card(i, { note: esc(t("In cinemas {date}", { date: date(i.date, { day: "numeric", month: "short" }) })) }));
-    return row(t("Coming to cinemas in Norway"), cards);
+    const items = (await comingSeries()).slice(0, 16);
+    const cards = items.map((s) => card(s, {
+      note: esc(s.season
+        ? t("Season {n}, {date}", { n: s.season, date: date(s.soon, { day: "numeric", month: "short" }) })
+        : t("New, {date}", { date: date(s.soon, { day: "numeric", month: "short" }) })),
+    }));
+    return row(t("Coming to your services"), cards, { more: "#/browse/coming" });
   },
 };
 
@@ -32,5 +37,6 @@ const newestRow = {
 
 register({
   id: "upcoming",
-  homeRows: [newestRow, cinemaRow],
+  routes: [{ path: /^\/browse\/coming$/, view: lazy(() => import("./coming.js")) }],
+  homeRows: [newestRow, comingRow],
 });

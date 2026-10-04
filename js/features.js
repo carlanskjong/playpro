@@ -12,7 +12,8 @@ import "./features/nowstreaming/index.js";    // Watchlist titles that arrived o
 import "./features/streaming/index.js";       // Norwegian streaming: where to watch, your services, Browse page
 import "./features/discover/index.js";        // Trending banner and rows, cast, "more like this"
 import "./features/recommendations/index.js"; // "Picked for you", from what you rated highly
-import "./features/upcoming/index.js";        // Coming to cinemas in Norway, newest on your services
+import "./features/upcoming/index.js";        // Coming to your services, newest on your services
+import "./features/cinema/index.js";          // Norwegian cinemas: showing now, premieres, showtimes and tickets
 import "./features/search/index.js";          // Search page
 import "./features/mylist/index.js";          // Watchlist, "seen it" and your 1-10 ratings
 import "./features/lists/index.js";           // Your own lists, shared with friends

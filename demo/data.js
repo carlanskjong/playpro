@@ -117,6 +117,9 @@ export function tmdbDetails(t) {
     credits: { cast: t.cast.map(([name, character], k) => ({ name, character, profile_path: `/person/${t.id}/${k}` })) },
     recommendations: { results: similar },
     videos: { results: [] },
+    ...(t.type === "movie" ? { release_dates: releaseDatesOf(t.id) } : {}),
+    ...(COMING_SEASONS.find((c) => c.id === t.id) ? { next_episode_to_air: { season_number: COMING_SEASONS.find((c) => c.id === t.id).season, episode_number: 1, air_date: COMING_SEASONS.find((c) => c.id === t.id).date } } : {}),
+    networks: [],
     "watch/providers": {
       results: {
         NO: {
@@ -141,3 +144,24 @@ export const UPCOMING = [
   [900004, "Avengers: Doomsday", 46, 0],
   [900005, "The Chronicles of Narnia", 60, 150],
 ].map(([id, title, days, hue]) => ({ id, title, date: soon(days), hue }));
+
+// Everything with a date: films coming to (or just opened in) cinemas, films
+// coming to stream or rent, and brand-new series.
+export const SOON = [
+  ...UPCOMING.map((u) => ({ ...u, type: "movie", kind: "cinema" })),
+  ...[[900011, "The Odyssey", -12, 30], [900012, "Kon-Tiki: The Return", -5, 190]].map(([id, title, days, hue]) => ({ id, title, date: soon(days), hue, type: "movie", kind: "cinema" })),
+  ...[[900021, "Wicked: For Good", 18, 300], [900022, "Sinners", 25, 10]].map(([id, title, days, hue]) => ({ id, title, date: soon(days), hue, type: "movie", kind: "digital" })),
+  ...[[900031, "Fjord Noir", 15, 200, 8]].map(([id, title, days, hue, provider]) => ({ id, title, date: soon(days), hue, type: "tv", kind: "series", provider })),
+];
+export const soonItem = (s) => ({
+  id: s.id, media_type: s.type, [s.type === "movie" ? "title" : "name"]: s.title, [s.type === "movie" ? "release_date" : "first_air_date"]: s.date,
+  poster_path: `/poster/${s.type}/${s.id}`, backdrop_path: null, vote_average: 0, vote_count: 0, overview: "", genre_ids: [], popularity: 50,
+});
+export const releaseDatesOf = (id) => {
+  const s = SOON.find((x) => x.id === id);
+  const t = byKey.get(`movie:${id}`);
+  const when = s ? { type: s.kind === "digital" ? 4 : 3, release_date: `${s.date}T00:00:00.000Z`, note: "" } : t ? { type: 3, release_date: `${t.year}-02-01T00:00:00.000Z`, note: "" } : null;
+  return { results: when ? [{ iso_3166_1: "NO", release_dates: [when] }] : [] };
+};
+// New seasons soon: [series id, season, in how many days]
+export const COMING_SEASONS = [[91599, 4, 9], [100088, 3, 20], [64439, 5, 33]].map(([id, season, days]) => ({ id, season, date: soon(days) }));
