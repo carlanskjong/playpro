@@ -1,7 +1,16 @@
-// Temporary: runs the app's own search code against the real TMDB (removed after use).
-const { findTitles } = await import("../js/features/search/find.js");
-for (const q of ["Arlington road", "Arlington road 1999", "Arlington Road (1999)", "arlinton road", "arlington raod", "Arlingtn Road", "tt0137363", "Tim Robbins", "Jeff Bridges 1999", "the godfathr", "Wonder Woman 1984", "Blade Runner 2049", "1917", "zzzqqq"]) {
-  const t0 = Date.now();
-  const r = await findTitles(q, 1);
-  console.log(`"${q}" -> note=${r.note || "-"} ${Date.now() - t0}ms:`, r.items.slice(0, 4).map((i) => `${i.title} (${i.year})`).join(" | ") || "NOTHING");
+// Temporary: how TMDB answers shortened words (removed after use).
+const KEY = "ccf2943bb1806ea8b4812c2a88e67dab";
+const get = async (path, params) => {
+  const u = new URL("https://api.themoviedb.org/3" + path);
+  u.searchParams.set("api_key", KEY);
+  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+  return (await fetch(u)).json();
+};
+for (const query of ["arlinton", "arlinto", "arlint", "arlin", "arli", "arling", "arlinton r", "arlinton road"]) {
+  for (const path of ["/search/multi", "/search/movie"]) {
+    const d = await get(path, { query, include_adult: "false", language: "nb-NO" });
+    const res = d.results || [];
+    const pos = res.findIndex((r) => r.id === 1073);
+    console.log(`${path} "${query}": total ${d.total_results}, Arlington Road at ${pos}; first: ${res.slice(0, 5).map((r) => r.title || r.name).join(" | ")}`);
+  }
 }
