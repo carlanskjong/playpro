@@ -28,7 +28,8 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 | `streaming` | "Where to watch in Norway", "On Netflix" chip, service picker in Settings, "Popular on your services", **Browse** page (with an IMDb 7+ filter when `imdb` is on) | – |
 | `discover` | Rotating home banner, trending rows, cast, "More like this" | – |
 | `recommendations` | "Picked for you", based on what you rated 8 or higher | `mylist` |
-| `upcoming` | "Coming to cinemas in Norway" and "Newest on your services" | – |
+| `upcoming` | **Browse → Coming soon** (new seasons and series coming to your services, films to stream or rent soon), "Coming to your services" and "Newest on your services" rows | `streaming` |
+| `cinema` | **Browse → Cinema** (showing now in Norwegian cinemas, premiere calendar), "Coming to cinemas in Norway" row, "At the cinema" with a showtimes link on film pages | `streaming` |
 | `search` | **Search** page | – |
 | `mylist` | Watchlist and Rate buttons, **My list** page, "Your watchlist" row, badges on posters | – |
 | `lists` | Your own lists ("Best of 2026"), visible to your friends | `mylist` |
@@ -62,7 +63,7 @@ Features that depend on another one simply hide their links when the other is sw
 | `onLogin` / `onLogout` | Code that runs when someone signs in or out | `async () => {…}` |
 | `exportData` | Extra data for "Download my data" | `async () => ({ my_table: rows })` |
 
-`order` decides the position (lower = higher up). Current home order: tonight 0, new on your services 10, banner 20, popular on your services 30, newest on your services 35, friends 40, picked for you 50, trending 60, cinemas 75, watchlist 80.
+`order` decides the position (lower = higher up). Current home order: tonight 0, new on your services 10, banner 20, popular on your services 30, newest on your services 35, coming to your services 36, friends 40, picked for you 50, trending 60, cinemas 75, watchlist 80.
 
 `render` returns HTML text. Return `""` to show nothing. `wire(box)` runs afterwards so you can add click handlers inside `box`. If a feature crashes, only its own box disappears; the rest of the page keeps working.
 
@@ -74,7 +75,7 @@ Write every text in English inside `t("…")` and add the Norwegian version to `
 
 ### Useful helpers
 
-- `js/lib/tmdb.js`: `trending`, `search`, `discover`, `details`, `recommendations`, `upcoming`, `providers`, `img(path, size)`; answers are cached on the phone
+- `js/lib/tmdb.js`: `trending`, `search`, `discover`, `details`, `recommendations`, `releasesIn`, `releaseDate`, `seriesNext`, `discoverAll`, `providers`, `img(path, size)`; answers are cached on the phone
 - `js/lib/db.js`: everything that reads or writes Supabase
 - `js/lib/ui.js`: `card`, `row`, `grid`, `empty`, `icon`, `drawing`, `toast`, `openDialog`, `esc` (**always** wrap text from users or TMDB in `esc(...)`)
 - `js/lib/i18n.js`: `t`, `plural`, `num`, `date`

@@ -1,6 +1,6 @@
 // Service worker: makes Playpro installable and load fast / offline.
 // Bump VERSION when you want every phone to drop its old cached copy.
-const VERSION = "playpro-v4";
+const VERSION = "playpro-v5";
 const SHELL = [
   "./",
   "index.html",

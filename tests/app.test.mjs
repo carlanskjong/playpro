@@ -44,7 +44,7 @@ async function open({ width = 390, lang = "en", username = "" } = {}) {
       access_token: "demo.eyJzdWIiOiJkZW1vIn0.demo", token_type: "bearer", expires_in: 360000, expires_at: now + 360000,
       refresh_token: "demo", user: { id: "00000000-0000-4000-8000-000000000001", email: "carl@example.com", aud: "authenticated", role: "authenticated" },
     }));
-    localStorage.setItem("playpro:lang", lang);
+    if (!localStorage.getItem("playpro:lang")) localStorage.setItem("playpro:lang", lang); // keep a language the app switched to
     // pretend the watchlist was checked before, so "new on your services" can show
     if (!localStorage.getItem("playpro:streaming-known")) localStorage.setItem("playpro:streaming-known", "[]");
     (0, eval)(mock);
@@ -250,6 +250,20 @@ console.log("Username rules");
     if (!(await page.$$eval("#tabbar a", (a) => a.length))) throw new Error("no menu");
   });
   await page.screenshot({ path: join(out, "phone-after-rename.png") });
+  if (errors.length) fail("errors: " + [...new Set(errors)].join(" | "));
+  await context.close();
+}
+
+console.log("Language button");
+{
+  const { page, errors, context } = await open();
+  try {
+    await visit(page, "/", ".tonight-q");
+    await page.click(".lang-switch");
+    await page.waitForFunction(() => /kveld/.test(document.querySelector(".tonight-q")?.textContent || ""), null, { timeout: 10000 });
+    if ((await page.textContent(".lang-switch")) !== "EN") throw new Error("button doesn't offer English now");
+    pass("NO button switches to Norwegian, then offers EN");
+  } catch (err) { fail(`language button: ${err.message.split("\n")[0]}`); }
   if (errors.length) fail("errors: " + [...new Set(errors)].join(" | "));
   await context.close();
 }

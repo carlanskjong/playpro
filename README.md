@@ -4,11 +4,11 @@ A free, private app for you and your friends that combines the best of **IMDb** 
 
 - **What should we watch tonight?** One tap picks something from both your watchlists that's streaming on your services.
 - **Where to watch in Norway:** Netflix, Max, Viaplay, TV 2 Play, NRK TV, Disney+, Prime Video and others. Your own services are highlighted, and you're told when something on your watchlist arrives on one of them.
-- **Browse** everything streaming in Norway by service, genre and IMDb score; see what's coming to Norwegian cinemas.
+- **Browse** everything streaming in Norway by service, genre and IMDb score; see what's on in Norwegian cinemas, with premiere dates and a link to showtimes and tickets; and see new seasons and series coming to your services.
 - **Ratings:** IMDb score (on every poster), Rotten Tomatoes score, and your friends' average.
 - **Watchlist + "seen it"** with 1–10 ratings and short reviews, recommendations from what you loved, your own lists, and **Your year** in numbers. Bring your old ratings from IMDb or Letterboxd.
 - **Friends:** friend requests, an activity feed, friends' reviews on every title, with reactions and comments.
-- **Norsk eller English:** the app follows your phone's language, and you can switch in Settings.
+- **Norsk eller English:** the app follows your phone's language; switch with the NO/EN button at the top. Search finds titles by their Norwegian, English or original name.
 - **Privacy built in:** invite-only sign-up, no tracking, and buttons to download or delete your own data.
 - **Plug-in features:** switch features on and off with one line (see [docs/FEATURES.md](docs/FEATURES.md)).
 
@@ -133,6 +133,7 @@ Then everyone goes to **Settings** (tap your avatar) and ticks their streaming s
 - IMDb's data file is licensed for **personal and non-commercial use only**, and their terms say it mustn't be used to build a movie database for others. Playpro stores only the rating and vote count, readable only by signed-in members of your private, invite-only group. That is a reasonable reading of "personal, non-commercial", but it is a grey area. Keep the app private and free; if IMDb ever objects, switch the feature off (one line) and delete the table.
 - Fill in `OWNER_NAME` and `OWNER_EMAIL` in `js/config.js` and answer if someone emails you.
 - Keep the invite code among friends. Change it anytime in Supabase (see the comment in `schema.sql`).
+- **Usernames:** rude words are blocked (English and Norwegian, also spelled with numbers like "a55"). If someone finds a way around it, add the word in **Supabase → SQL Editor**: `insert into private.blocked_words (word) values ('theword');` (lowercase letters only). Anyone whose name contains it must pick a new one the next time they open the app. Add `, true` after the word (`values ('theword', true)`) to block it only as a whole word, for words that hide inside ordinary ones.
 - Don't add tracking or analytics scripts.
 - If you add a feature that stores new kinds of data, add a line about it to the privacy notice (`js/core/pages.js`).
 
@@ -170,7 +171,8 @@ js/features/             one folder per feature
   streaming/             Norway: where to watch, your services, Browse page
   discover/              home banner, trending, cast, "more like this"
   recommendations/       "Picked for you"
-  upcoming/              cinemas in Norway, newest on your services
+  upcoming/              coming soon to your services, newest on your services
+  cinema/                Norwegian cinemas: showing now, premieres, showtimes
   search/                search page
   mylist/                watchlist, ratings, reviews
   lists/                 your own lists

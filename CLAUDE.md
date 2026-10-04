@@ -7,6 +7,7 @@ Private movie/series PWA for a couple of friends in Norway: where to stream (TMD
 - **No build step.** Plain ES modules served as-is by GitHub Pages (`.nojekyll`). Don't add a bundler or framework. `node_modules` is only for tests and the demo.
 - **Free and private.** No paid services, analytics, trackers, Google Fonts or third-party embeds. Fonts are self-hosted in `fonts/`.
 - **Secrets:** the Supabase secret/service key lives only in GitHub Actions secrets; never in `js/config.js` or anywhere in the repo. The invite code lives only in the database. Never ask the owner to paste the secret key into chat.
+- **Usernames** follow `public.username_problem()` in the schema (format + `private.blocked_words`); the database enforces it and the app shows `js/core/rename.js` to anyone whose old name breaks a newer rule.
 - **GDPR:** new kinds of stored data need RLS, a line in the privacy notice (`js/core/pages.js`), inclusion in the data export (`exportData` slot) and `on delete cascade`.
 
 ## Architecture
