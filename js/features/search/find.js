@@ -24,10 +24,15 @@ function distance(a, b) {
 // 1 = the same, 0 = nothing alike. Also compares with the start of the title,
 // so "arlinton" still looks like "Arlington Road".
 function likeness(query, title) {
-  const q = simple(query), t = simple(title);
-  const whole = 1 - distance(q, t) / Math.max(q.length, t.length);
-  const start = 1 - distance(q, t.slice(0, q.length)) / q.length;
-  return Math.max(whole, start);
+  const q = simple(query);
+  // each part of "Ringenes herre - Ringens brorskap" counts on its own too
+  return Math.max(...[title, ...title.split(/\s[-–:]\s|:\s/)].map((part) => {
+    const t = simple(part);
+    if (!t) return 0;
+    const whole = 1 - distance(q, t) / Math.max(q.length, t.length);
+    const start = 1 - distance(q, t.slice(0, q.length)) / q.length;
+    return Math.max(whole, start);
+  }));
 }
 
 // Shorter and shorter versions of the text: "arlinton road" -> "arlinton roa" -> … -> "arlin"
