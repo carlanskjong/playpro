@@ -34,6 +34,114 @@ on conflict (key) do nothing;
 -- Tip: to change the code later, run:
 --   update private.settings set value = 'new-code' where key = 'invite_code';
 
+-- Words that may not appear in usernames. "false" = blocked anywhere in the
+-- name ("xfuckx"); "true" = blocked only as a whole word, because it hides
+-- inside ordinary words ("ass" in "classic"). Look-alike spellings are
+-- caught too: "a55", "BigAss", "fuuuck". Add a word anytime:
+--   insert into private.blocked_words (word, whole_word) values ('word', false);
+-- Anyone whose username then breaks the rules must choose a new one the
+-- next time they open the app.
+create table if not exists private.blocked_words (
+  word       text primary key check (word ~ '^[a-z]+$'),
+  whole_word boolean not null default false
+);
+alter table private.blocked_words enable row level security;
+insert into private.blocked_words (word, whole_word) values
+  ('fuck', false),
+  ('shit', false),
+  ('cunt', false),
+  ('nigger', false),
+  ('nigga', false),
+  ('faggot', false),
+  ('whore', false),
+  ('slut', false),
+  ('bitch', false),
+  ('bastard', false),
+  ('asshole', false),
+  ('dickhead', false),
+  ('penis', false),
+  ('vagina', false),
+  ('pussy', false),
+  ('porn', false),
+  ('hitler', false),
+  ('nazi', false),
+  ('retard', false),
+  ('wanker', false),
+  ('dildo', false),
+  ('blowjob', false),
+  ('handjob', false),
+  ('pedophile', false),
+  ('paedophile', false),
+  ('molest', false),
+  ('incest', false),
+  ('tranny', false),
+  ('jizz', false),
+  ('piss', false),
+  ('faen', false),
+  ('fitte', false),
+  ('fitta', false),
+  ('kuken', false),
+  ('pikken', false),
+  ('horunge', false),
+  ('neger', false),
+  ('javla', false),
+  ('jaevla', false),
+  ('jevla', false),
+  ('helvete', false),
+  ('helvette', false),
+  ('dritt', false),
+  ('rasshol', false),
+  ('tispe', false),
+  ('knull', false),
+  ('homse', false),
+  ('mongoloid', false),
+  ('ass', true),
+  ('arse', true),
+  ('dick', true),
+  ('cock', true),
+  ('rape', true),
+  ('rapist', true),
+  ('crap', true),
+  ('cum', true),
+  ('tits', true),
+  ('anal', true),
+  ('sex', true),
+  ('pedo', true),
+  ('paedo', true),
+  ('kkk', true),
+  ('heil', true),
+  ('kike', true),
+  ('spic', true),
+  ('chink', true),
+  ('gook', true),
+  ('coon', true),
+  ('dyke', true),
+  ('homo', true),
+  ('twat', true),
+  ('kuk', true),
+  ('pikk', true),
+  ('hore', true),
+  ('hora', true),
+  ('rava', true),
+  ('raeva', true),
+  ('satan', true),
+  ('kodd', true),
+  ('koedd', true),
+  ('pule', true),
+  ('soper', true),
+  ('mongo', true),
+  ('admin', true),
+  ('administrator', true),
+  ('playpro', true),
+  ('moderator', true),
+  ('mod', true),
+  ('support', true),
+  ('root', true),
+  ('system', true),
+  ('staff', true),
+  ('official', true)
+on conflict (word) do nothing;
+
 
 -- ---------------------------------------------------------------------
 -- 2. Tables
@@ -181,6 +289,41 @@ as $$
   select not exists (select 1 from public.profiles where lower(username) = lower(name));
 $$;
 
+-- What's wrong with a username, if anything: 'format' (not 3 to 20 letters,
+-- numbers or _), 'blocked' (a word from private.blocked_words), or null.
+create or replace function public.username_problem(name text)
+returns text
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  spaced   text;
+  flat     text;
+  squeezed text;
+  tokens   text[];
+  w        record;
+begin
+  if name is null or name !~ '^[A-Za-z0-9_]{3,20}$' then
+    return 'format';
+  end if;
+  -- "BigA55_x" -> words "big", "ass", "x"; flat "bigassx"; squeezed drops repeats ("fuuuck" -> "fuck")
+  spaced   := lower(regexp_replace(name, '([a-z])([A-Z])', '\1_\2', 'g'));
+  spaced   := regexp_replace(translate(spaced, '013457', 'oieast'), '[0-9]', '', 'g');
+  tokens   := array_remove(string_to_array(spaced, '_'), '');
+  flat     := replace(spaced, '_', '');
+  squeezed := regexp_replace(flat, '(.)\1+', '\1', 'g');
+  for w in select word, whole_word from private.blocked_words loop
+    if w.whole_word then
+      if w.word = any (tokens) or w.word = flat then return 'blocked'; end if;
+    elsif position(w.word in flat) > 0
+       or (char_length(regexp_replace(w.word, '(.)\1+', '\1', 'g')) >= 4
+           and position(regexp_replace(w.word, '(.)\1+', '\1', 'g') in squeezed) > 0) then
+      return 'blocked';
+    end if;
+  end loop;
+  return null;
+end;
+$$;
+
 -- "Delete my account" button: removes the login and, through the
 -- "on delete cascade" rules above, every row that belongs to the user.
 create or replace function public.delete_my_account()
@@ -200,6 +343,7 @@ revoke execute on function public.delete_my_account()      from public, anon;
 grant  execute on function public.is_friend(uuid)          to authenticated;
 grant  execute on function public.delete_my_account()      to authenticated;
 grant  execute on function public.username_available(text) to anon, authenticated;
+grant  execute on function public.username_problem(text)   to anon, authenticated;
 
 
 -- ---------------------------------------------------------------------
@@ -246,6 +390,29 @@ drop trigger if exists playpro_create_profile on auth.users;
 create trigger playpro_create_profile
   after insert on auth.users
   for each row execute function public.playpro_create_profile();
+
+-- Usernames must follow the rules when they're chosen or changed. (Names
+-- chosen before a rule existed are left alone; the app asks those people
+-- to pick a new one.)
+create or replace function public.playpro_check_username()
+returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  problem text := public.username_problem(new.username);
+begin
+  if problem is not null then
+    raise exception 'Username not allowed (%)', problem using errcode = 'check_violation';
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.playpro_check_username() from public, anon, authenticated;
+
+drop trigger if exists playpro_check_username on public.profiles;
+create trigger playpro_check_username
+  before insert or update of username on public.profiles
+  for each row execute function public.playpro_check_username();
 
 
 -- ---------------------------------------------------------------------

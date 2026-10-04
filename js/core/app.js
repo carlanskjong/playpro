@@ -10,6 +10,7 @@ import titleView, { trailerAction } from "./title.js";
 import settingsView from "./settings.js";
 import { loginView, resetView } from "./auth.js";
 import { privacyView, aboutView, setupView } from "./pages.js";
+import renameView from "./rename.js";
 import "../features.js";
 
 register({
@@ -45,7 +46,7 @@ export function navigate(hash) {
 function renderChrome(path) {
   const signedIn = !!state.session;
   document.body.classList.toggle("signed-out", !signedIn);
-  const items = signedIn ? slot("nav") : [];
+  const items = signedIn && !state.profile?.usernameProblem ? slot("nav") : [];
   const isActive = (href) => {
     const target = href.replace(/^#/, "");
     return target === "/" ? path === "/" : path.startsWith(target);
@@ -104,6 +105,8 @@ export async function router() {
     return location.replace(`#/login${next}`);
   }
   if (path === "/login" && state.session) return location.replace("#/");
+  // A username that breaks the rules must be changed before anything else.
+  if (state.profile?.usernameProblem && !route.public) route = { view: renameView };
 
   const el = document.createElement("div");
   el.className = "page";

@@ -21,9 +21,23 @@ export function check({ data, error }) {
   return data;
 }
 
+// ---------- usernames ----------
+
+// What's wrong with a username, as a sentence to show, or "" if it's fine.
+// The database has the real rules (supabase/schema.sql, username_problem).
+export async function usernameProblem(name) {
+  const { data, error } = await sb.rpc("username_problem", { name });
+  const problem = error ? (/^[A-Za-z0-9_]{3,20}$/.test(name) ? null : "format") : data; // older database: format only
+  if (problem === "format") return t("Use 3 to 20 letters, numbers or _.");
+  if (problem === "blocked") return t("That username isn't allowed. Pick another one.");
+  return "";
+}
+
 // ---------- account ----------
 
 export async function signUp({ email, password, username, inviteCode }) {
+  const problem = await usernameProblem(username);
+  if (problem) throw new Error(problem);
   const lookup = await sb.rpc("username_available", { name: username });
   if (lookup.error && (lookup.error.code === "PGRST202" || /schema cache/i.test(lookup.error.message))) {
     throw new Error(t("The database isn't set up yet. Run supabase/schema.sql in the SQL Editor of your Playpro Supabase project (README, step 2)."));
@@ -68,15 +82,26 @@ export async function deleteAccount() {
 
 // ---------- profile ----------
 
+// Your profile. usernameProblem is set when your name breaks a rule that came
+// after you chose it; the app then asks for a new one (js/core/rename.js).
 export async function loadProfile() {
-  state.profile = check(await sb.from("profiles").select("*").eq("id", uid()).maybeSingle());
-  return state.profile;
+  const profile = check(await sb.from("profiles").select("*").eq("id", uid()).maybeSingle());
+  if (profile) profile.usernameProblem = await usernameProblem(profile.username).catch(() => "");
+  state.profile = profile;
+  return profile;
 }
 
 export async function updateProfile(patch) {
-  const row = check(await sb.from("profiles").update(patch).eq("id", uid()).select().single());
-  state.profile = row;
-  return row;
+  if ("username" in patch) {
+    const problem = await usernameProblem(patch.username);
+    if (problem) throw new Error(problem);
+  }
+  const { data, error } = await sb.from("profiles").update(patch).eq("id", uid()).select().single();
+  if (error && /duplicate|unique/i.test(error.message)) throw new Error(t("That username is taken. Try another one."));
+  if (error && /not allowed/i.test(error.message)) throw new Error(t("That username isn't allowed. Pick another one."));
+  const row = check({ data, error });
+  state.profile = { ...row, usernameProblem: "" };
+  return state.profile;
 }
 
 export async function profileByUsername(username) {

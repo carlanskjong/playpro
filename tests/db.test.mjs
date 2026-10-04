@@ -65,6 +65,25 @@ await ok("change own username, services, picture", "authenticated", A, `update p
 await refused("edit someone else's profile", "authenticated", C, `update public.profiles set username = 'hacked' where id = '${A}' returning id`);
 await refused("change own id", "authenticated", A, `update public.profiles set id = '${C}' where id = '${A}'`);
 
+console.log("Username rules");
+const problem = async (name) => (await as("anon", null, `select public.username_problem('${name}') as p`))[0].p;
+for (const [name, want] of [["carlan", null], ["Classic_Fan", null], ["therapist", null], ["Pisces_99", null], ["grapefruit", null], ["Scott", null],
+  ["a", "format"], ["no spaces", "format"], ["fuckface", "blocked"], ["F_U_C_K", "blocked"], ["fuuuck", "blocked"], ["BigAss", "blocked"],
+  ["big_a55", "blocked"], ["Sh1tHead", "blocked"], ["faen_ta", "blocked"], ["kuk69", "blocked"], ["admin", "blocked"], ["Playpro", "blocked"]]) {
+  const got = await problem(name);
+  if (got === want) console.log("  ok   ", `username "${name}" is ${want ?? "fine"}`);
+  else { failed++; console.log("  FAIL ", `username "${name}" gave ${got}, expected ${want}`); }
+}
+await refused("sign up with a blocked username", "supabase_auth_admin", null, user("00000000-0000-0000-0000-0000000000fd", "shithead"));
+await refused("rename yourself to a blocked username", "authenticated", A, `update public.profiles set username = 'b1tch' where id = '${A}' returning id`);
+// as if chosen before the rule existed
+await db.exec(`alter table public.profiles disable trigger playpro_check_username; update public.profiles set username = 'wanker_old' where id = '${C}'; alter table public.profiles enable trigger playpro_check_username;`);
+await ok("an old blocked name stays readable", "authenticated", C, "select username from public.profiles where username = 'wanker_old'", (r) => r.length === 1);
+await ok("their other changes still work", "authenticated", C, `update public.profiles set services = '{8}' where id = '${C}' returning id`, (r) => r.length === 1);
+await ok("and the app can see the name must change", "authenticated", C, "select public.username_problem('wanker_old') as p", (r) => r[0].p === "blocked");
+await ok("rename to an allowed name", "authenticated", C, `update public.profiles set username = 'stranger' where id = '${C}' returning id`, (r) => r.length === 1);
+await refused("members read the blocked words", "authenticated", A, "select * from private.blocked_words");
+
 console.log("Lists and ratings");
 const entry = (u, id, status, rating = "null") => `insert into public.entries (user_id, media_type, tmdb_id, title, status, rating, imdb_id, watched_at) values ('${u}', 'movie', ${id}, 'Film ${id}', '${status}', ${rating}, 'tt${id}', now()) on conflict (user_id, media_type, tmdb_id) do update set status = excluded.status, rating = excluded.rating returning status`;
 await ok("add to watchlist", "authenticated", A, entry(A, 1, "watchlist"));

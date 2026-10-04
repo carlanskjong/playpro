@@ -63,7 +63,7 @@ export default async function settingsView({ el }) {
       toast(t("Username saved"), "good");
       settingsView({ el });
     } catch (err) {
-      toast(/duplicate|unique/i.test(err.message) ? t("That username is taken") : errorMessage(err), "bad");
+      toast(errorMessage(err), "bad");
     }
   });
 

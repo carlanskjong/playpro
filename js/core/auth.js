@@ -39,7 +39,7 @@ export async function loginView({ el, query }) {
       </form>`,
     signup: () => `
       <form class="form" id="auth-form">
-        ${field("username", t("Username"), `<input name="username" autocomplete="username" required pattern="[A-Za-z0-9_]{3,20}" maxlength="20">`, t("3 to 20 letters, numbers or _. Other members can see it."))}
+        ${field("username", t("Username"), `<input name="username" autocomplete="username" required pattern="[A-Za-z0-9_]{3,20}" maxlength="20">`, t("3 to 20 letters, numbers or _, and nothing rude. Other members can see it."))}
         ${field("email", t("Email"), `<input type="email" name="email" autocomplete="email" required>`, t("Only used to sign in. Nobody else sees it."))}
         ${field("password", t("Password"), `<input type="password" name="password" autocomplete="new-password" required minlength="8">`, t("At least 8 characters."))}
         ${field("invite", t("Invite code"), `<input name="invite" required autocomplete="off">`, t("Ask the person who sent you the link."))}

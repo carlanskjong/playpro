@@ -103,7 +103,7 @@ const entry = (user, type, id, status, rating, review, hoursAgo) => {
 
 const db = {
   profiles: [
-    { id: ME, username: "carl", services: [8, 1899, 2270], avatar: null, created_at: "2026-01-12T10:00:00Z" },
+    { id: ME, username: savedUsername() || globalThis.__playproMockUsername || "carl", services: [8, 1899, 2270], avatar: null, created_at: "2026-01-12T10:00:00Z" },
     { id: ANNA, username: "anna", services: [8, 337, 76], avatar: null, created_at: "2026-01-14T10:00:00Z" },
     { id: JONAS, username: "jonas_k", services: [1899], avatar: null, created_at: "2026-02-02T10:00:00Z" },
     { id: MARI, username: "mari", services: [], avatar: null, created_at: "2026-03-20T10:00:00Z" },
@@ -337,6 +337,13 @@ function tmdb(path, p) {
 
 // ---------- fetch ----------
 
+// A rename survives reloading the page (the rest of the fake data doesn't).
+function savedUsername() { try { return sessionStorage.getItem("playpro-mock-username"); } catch { return null; } }
+
+// A small stand-in for the database's username rules (supabase/schema.sql).
+const usernameProblem = (name) => !/^[A-Za-z0-9_]{3,20}$/.test(name) ? "format"
+  : /fuck|shit|wanker/i.test(name) || /^(admin|playpro)$/i.test(name) ? "blocked" : null;
+
 const json = (data, status = 200) => new Response(data === null ? null : JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
 const session = () => ({
   access_token: "demo.eyJzdWIiOiJkZW1vIn0.demo", token_type: "bearer", expires_in: 360000,
@@ -362,6 +369,7 @@ globalThis.fetch = async (input, init = {}) => {
   if (path.startsWith("/auth/v1/logout")) return new Response(null, { status: 204 });
   if (path.startsWith("/auth/v1/recover")) return json({});
   if (path === "/rest/v1/rpc/username_available") return json(true);
+  if (path === "/rest/v1/rpc/username_problem") return json(usernameProblem(JSON.parse(init.body).name));
   if (path === "/rest/v1/rpc/delete_my_account") {
     db.entries = db.entries.filter((e) => e.user_id !== ME);
     db.friendships = db.friendships.filter((f) => f.requester !== ME && f.addressee !== ME);
@@ -375,6 +383,10 @@ globalThis.fetch = async (input, init = {}) => {
   // second way, so an embed must say which link to follow (profiles!user_id).
   if (table === "entries" && /(^|[,\s])profiles\(/.test(url.searchParams.get("select") || "")) {
     return json({ code: "PGRST201", message: "Could not embed because more than one relationship was found for 'entries' and 'profiles'" }, 300);
+  }
+  if (table === "profiles" && method === "PATCH" && body?.username) {
+    if (usernameProblem(body.username)) return json({ code: "23514", message: `Username not allowed (${usernameProblem(body.username)})` }, 400);
+    try { sessionStorage.setItem("playpro-mock-username", body.username); } catch { /* ignore */ }
   }
   const rows = method === "GET" ? select(table, url.searchParams).map((r) => embed(table, r)) : write(table, method, url.searchParams, body);
   const wantsObject = (headers.get("accept") || "").includes("vnd.pgrst.object");

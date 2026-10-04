@@ -263,7 +263,6 @@ export default {
   "Username": "Brukernavn",
   "Other members see this name when they look for friends.": "Andre medlemmer ser dette navnet når de leter etter venner.",
   "Username saved": "Brukernavnet er lagret",
-  "That username is taken": "Brukernavnet er tatt",
   "Language": "Språk",
   "Changes the app's buttons and menus, and movie descriptions where TMDB has them in Norwegian.": "Endrer knapper og menyer, og filmbeskrivelser der TMDB har dem på norsk.",
   "Your data and privacy": "Dine data og personvern",
@@ -308,7 +307,7 @@ export default {
   "Email": "E-post",
   "Password": "Passord",
   "Forgot password?": "Glemt passordet?",
-  "3 to 20 letters, numbers or _. Other members can see it.": "3 til 20 bokstaver, tall eller _. Andre medlemmer kan se det.",
+  "3 to 20 letters, numbers or _, and nothing rude. Other members can see it.": "3 til 20 bokstaver, tall eller _, og ingenting frekt. Andre medlemmer kan se det.",
   "Only used to sign in. Nobody else sees it.": "Brukes bare til å logge inn. Ingen andre ser den.",
   "At least 8 characters.": "Minst 8 tegn.",
   "Invite code": "Invitasjonskode",
@@ -379,4 +378,11 @@ export default {
   "Fun fact": "Visste du?",
   "{title} has {n} credited actors.": "{title} har {n} oppførte skuespillere.",
   "This page comes from the template feature.": "Denne siden kommer fra malen.",
+  // username rules
+  "Use 3 to 20 letters, numbers or _.": "Bruk 3 til 20 bokstaver, tall eller _.",
+  "That username isn't allowed. Pick another one.": "Det brukernavnet er ikke lov. Velg et annet.",
+  "Choose a new username": "Velg et nytt brukernavn",
+  "Your username doesn't follow Playpro's rules for names. Pick a new one to keep using the app. Your lists, ratings and friends stay as they are.": "Brukernavnet ditt følger ikke Playpros regler for navn. Velg et nytt for å fortsette å bruke appen. Listene, vurderingene og vennene dine blir som før.",
+  "New username": "Nytt brukernavn",
+  "Save username": "Lagre brukernavn",
 };

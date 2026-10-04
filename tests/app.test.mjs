@@ -33,11 +33,12 @@ let failures = 0;
 const fail = (msg) => { failures++; console.log("  FAIL ", msg); };
 const pass = (msg) => console.log("  ok   ", msg);
 
-async function open({ width = 390, lang = "en" } = {}) {
+async function open({ width = 390, lang = "en", username = "" } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 }, deviceScaleFactor: 2, isMobile: width < 600, hasTouch: width < 600 });
   await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: base });
-  await context.addInitScript(({ mock, ref, lang }) => {
+  await context.addInitScript(({ mock, ref, lang, username }) => {
     globalThis.__playproMockDelay = 20;
+    if (username) globalThis.__playproMockUsername = username;
     const now = Math.floor(Date.now() / 1000);
     localStorage.setItem(`sb-${ref}-auth-token`, JSON.stringify({
       access_token: "demo.eyJzdWIiOiJkZW1vIn0.demo", token_type: "bearer", expires_in: 360000, expires_at: now + 360000,
@@ -47,7 +48,7 @@ async function open({ width = 390, lang = "en" } = {}) {
     // pretend the watchlist was checked before, so "new on your services" can show
     if (!localStorage.getItem("playpro:streaming-known")) localStorage.setItem("playpro:streaming-known", "[]");
     (0, eval)(mock);
-  }, { mock, ref, lang });
+  }, { mock, ref, lang, username });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -210,6 +211,31 @@ console.log("Actions");
 }
 
 // ---------- Norwegian and desktop ----------
+console.log("Username rules");
+{
+  const { page, errors, context } = await open({ username: "wanker_x" });
+  const step = async (name, fn) => { try { await fn(); pass(name); } catch (err) { fail(`${name}: ${err.message.split("\n")[0]}`); } };
+  await step("a blocked username must be changed first", async () => {
+    await visit(page, "/friends", ".rename");
+    if (await page.$$eval("#tabbar a", (a) => a.length)) throw new Error("menu still shown");
+    await page.screenshot({ path: join(out, "phone-rename.png") });
+  });
+  await step("another blocked name is refused", async () => {
+    await page.fill("#new-username", "shitlord");
+    await page.click("#rename-form button[type=submit]");
+    await page.waitForFunction(() => /isn't allowed/.test(document.querySelector(".form-error").textContent));
+  });
+  await step("an allowed name opens the app", async () => {
+    await page.fill("#new-username", "carl_ok");
+    await page.click("#rename-form button[type=submit]");
+    await page.waitForSelector(".tonight-q", { timeout: 10000 });
+    if (!(await page.$$eval("#tabbar a", (a) => a.length))) throw new Error("no menu");
+  });
+  await page.screenshot({ path: join(out, "phone-after-rename.png") });
+  if (errors.length) fail("errors: " + [...new Set(errors)].join(" | "));
+  await context.close();
+}
+
 console.log("Norwegian and desktop");
 {
   const { page, errors, context } = await open({ lang: "nb" });
