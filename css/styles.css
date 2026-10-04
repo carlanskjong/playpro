@@ -658,3 +658,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--l
 .link-danger { color: var(--ember); }
 #invite-form { flex-wrap: wrap; }
 #invite-form input { flex: 1 1 14rem; }
+
+/* ---------- step-by-step guides (import) ---------- */
+.guide { margin: 10px 0; border-top: 1px solid var(--haze); }
+.guide:last-of-type { border-bottom: 1px solid var(--haze); margin-bottom: 16px; }
+.guide summary { cursor: pointer; padding: 12px 0; font-weight: 650; color: var(--snow); }
+.guide[open] summary { color: var(--lamp); }
+.guide-steps { margin: 0 0 14px; padding-left: 1.4em; display: grid; gap: 10px; color: var(--fjord); max-width: 62ch; }
+.guide-steps li::marker { color: var(--lamp); font-weight: 700; }
+.guide-steps strong { color: var(--snow); }
+.guide-steps a { color: var(--snow); text-decoration: underline; text-underline-offset: 3px; }

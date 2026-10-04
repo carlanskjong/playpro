@@ -225,6 +225,15 @@ console.log("Actions");
     await page.click(`[data-revoke="${code}"]`);
     await page.waitForFunction((c) => [...document.querySelectorAll(".invite-list li")].some((li) => li.textContent.includes(c) && li.textContent.includes("Cancelled")), code);
   });
+  await step("import guides for computer and phone", async () => {
+    await visit(page, "/settings", ".guide");
+    const guides = await page.$$(".guide");
+    if (guides.length !== 2) throw new Error(`${guides.length} guides`);
+    await page.click(".guide:nth-of-type(2) summary");
+    await page.waitForSelector(".guide[open] a[href='https://www.imdb.com/exports/']");
+    await page.locator(".guide[open]").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(out, "phone-import-guide.png") });
+  });
   await step("an invite link fills in the code", async () => {
     const { page: guest, context: guestContext } = await openGuest();
     await guest.goto(base + "#/login?mode=signup&invite=ABCDE-12345");

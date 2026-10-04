@@ -34,7 +34,7 @@ Commit, and the site updates. To switch it back on, remove the `//`.
 | `mylist` | Watchlist and Rate buttons, **My list** page, "Your watchlist" row, badges on posters | – |
 | `lists` | Your own lists ("Best of 2026"), visible to your friends | `mylist` |
 | `stats` | **Your year**: titles per month, hours, genres, favourites | `mylist` |
-| `importer` | Import your ratings from an IMDb or Letterboxd CSV export (Settings) | `mylist` |
+| `importer` | Import your ratings from an IMDb or Letterboxd CSV export (Settings), with step-by-step guides for getting the IMDb file on a computer or phone | `mylist` |
 | `friends` | **Friends** page, profiles, feed row, friends' ratings on titles, reactions and comments | `mylist` |
 | `share` | Share button on title pages (phone share sheet, or copies the link) | – |
 | `invites` | **Invite friends** in Settings for the administrator: single-use invite codes that last 7 days, with a share link | – |
