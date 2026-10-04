@@ -1,0 +1,17 @@
+# Temporary one-off research run (removed after use).
+name: TMDB probe
+on:
+  push:
+    paths: [".github/workflows/tmdb-probe.yml", "scripts/tmdb-probe.mjs"]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node scripts/tmdb-probe.mjs
