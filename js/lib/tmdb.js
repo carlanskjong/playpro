@@ -124,6 +124,13 @@ export async function search(query, page = 1) {
   return { items, totalPages: data.total_pages || 1 };
 }
 
+// Movies and series only, without people (used for close matches, where
+// people with similar names would crowd out the titles).
+export async function searchTitles(query) {
+  const [movies, series] = await Promise.all(["movie", "tv"].map(async (type) => list(await get(`/search/${type}`, { query, include_adult: "false" }), type)));
+  return [...movies, ...series];
+}
+
 export async function discover(type, { providers = [], region, genre, sort = "popularity.desc", page = 1, minVotes } = {}) {
   const params = { page, sort_by: sort, with_genres: genre, include_adult: "false", "vote_count.gte": minVotes };
   if (providers.length) {

@@ -4,9 +4,9 @@
 // like it ("arlinton road" finds Arlington Road). Actors are shown as the
 // titles they're known for (see search() in lib/tmdb.js), and a pasted IMDb
 // link finds that title.
-import { search, findByImdb } from "../../lib/tmdb.js";
+import { search, searchTitles, findByImdb } from "../../lib/tmdb.js";
 
-const MAX_TRIES = 10;
+const MAX_TRIES = 8;
 const simple = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9æøå ]+/g, " ").replace(/\s+/g, " ").trim();
 
 function distance(a, b) {
@@ -59,8 +59,7 @@ export async function findTitles(text, page = 1) {
   }
 
   for (const attempt of shorter(query)) {
-    const data = await search(attempt, 1);
-    const close = data.items
+    const close = (await searchTitles(attempt))
       .map((item) => ({ item, score: likeness(query, item.title) }))
       .filter((x) => x.score >= 0.6)
       .sort((a, b) => b.score - a.score)

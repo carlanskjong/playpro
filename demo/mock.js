@@ -306,9 +306,9 @@ function tmdb(path, p) {
     const q = norm(p.get("query") || "");
     return { results: TITLES.filter((t) => norm(t.title).includes(q) || t.cast.some(([n]) => norm(n).includes(q))).map(tmdbListItem), total_pages: 1 };
   }
-  if (path === "/search/movie") {
+  if ((m = path.match(/^\/search\/(movie|tv)$/))) {
     const q = norm(p.get("query") || "");
-    return { results: TITLES.filter((t) => t.type === "movie" && norm(t.title) === q).map(tmdbListItem) };
+    return { results: TITLES.filter((t) => t.type === m[1] && norm(t.title).includes(q)).map(tmdbListItem) };
   }
   if ((m = path.match(/^\/find\/(tt\d+)$/))) {
     const t = TITLES.find((x) => x.imdbId === m[1]);
