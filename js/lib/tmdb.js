@@ -91,6 +91,7 @@ export function normalize(raw, type) {
     type: mediaType,
     id: raw.id,
     title: raw.title || raw.name || "Untitled",
+    originalTitle: raw.original_title || raw.original_name || "",
     year: day.slice(0, 4),
     date: day,
     poster: raw.poster_path || null,
@@ -126,8 +127,8 @@ export async function search(query, page = 1) {
 
 // Movies and series only, without people (used for close matches, where
 // people with similar names would crowd out the titles).
-export async function searchTitles(query) {
-  const [movies, series] = await Promise.all(["movie", "tv"].map(async (type) => list(await get(`/search/${type}`, { query, include_adult: "false" }), type)));
+export async function searchTitles(query, language) {
+  const [movies, series] = await Promise.all(["movie", "tv"].map(async (type) => list(await get(`/search/${type}`, { query, include_adult: "false", language }), type)));
   return [...movies, ...series];
 }
 

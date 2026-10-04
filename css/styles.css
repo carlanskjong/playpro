@@ -140,9 +140,11 @@ svg { flex-shrink: 0; }
 .topnav a:hover { color: var(--snow); }
 .topnav a.active { color: var(--snow); background: var(--dusk); }
 .topnav a.active svg { color: var(--lamp); }
-.me { margin-left: auto; display: flex; align-items: center; }
+.me { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .me-link { border-radius: 99px; padding: 2px; border: 2px solid transparent; }
 .me-link.active, .me-link:hover { border-color: var(--lamp); }
+.lang-switch { min-width: 44px; height: 36px; padding: 0 10px; border-radius: 99px; border: 1.5px solid var(--haze); background: transparent; color: var(--fjord); font: inherit; font-weight: 700; font-size: var(--t-sm); letter-spacing: 0.04em; cursor: pointer; }
+.lang-switch:hover { color: var(--snow); border-color: var(--fjord); }
 
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;

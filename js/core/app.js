@@ -3,7 +3,7 @@ import config from "../config.js";
 import { sb, loadProfile } from "../lib/db.js";
 import { state } from "../lib/state.js";
 import { icon, avatar, esc, errorMessage } from "../lib/ui.js";
-import { t } from "../lib/i18n.js";
+import { t, lang, setLang } from "../lib/i18n.js";
 import { register, slot } from "./registry.js";
 import homeView from "./home.js";
 import titleView, { trailerAction } from "./title.js";
@@ -56,9 +56,12 @@ function renderChrome(path) {
     .join("");
   document.getElementById("topnav").innerHTML = links;
   document.getElementById("tabbar").innerHTML = links;
-  document.getElementById("me").innerHTML = signedIn
+  // One tap switches language: the button shows the language you'd switch to.
+  const other = lang === "nb" ? "en" : "nb";
+  const langButton = `<button type="button" class="lang-switch" data-switch-lang="${other}" lang="${other === "nb" ? "no" : "en"}" aria-label="${other === "nb" ? "Bytt til norsk" : "Switch to English"}">${other === "nb" ? "NO" : "EN"}</button>`;
+  document.getElementById("me").innerHTML = langButton + (signedIn
     ? `<a href="#/settings" class="me-link ${path === "/settings" ? "active" : ""}" aria-label="${esc(t("Settings and account"))}">${avatar(state.profile?.username || "?")}</a>`
-    : path === "/login" ? "" : `<a href="#/login" class="btn btn-small">${esc(t("Sign in"))}</a>`;
+    : path === "/login" ? "" : `<a href="#/login" class="btn btn-small">${esc(t("Sign in"))}</a>`);
 }
 
 const footer = () => `
@@ -165,6 +168,11 @@ async function applySession(session) {
 // Safari's pinch gesture here. Remove these two lines to allow zooming again.
 document.addEventListener("gesturestart", (e) => e.preventDefault());
 document.addEventListener("gesturechange", (e) => e.preventDefault());
+
+document.addEventListener("click", (e) => {
+  const button = e.target.closest("[data-switch-lang]");
+  if (button) setLang(button.dataset.switchLang);
+});
 
 // A feature or the settings page changed the name or picture: redraw the header.
 window.addEventListener("playpro:profile-changed", () => renderChrome(parseHash().path));

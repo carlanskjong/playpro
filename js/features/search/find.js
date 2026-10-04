@@ -1,10 +1,12 @@
 // A forgiving search. TMDB only finds exact spellings, so when it finds
 // nothing this tries again: without a year at the end ("Arlington road 1999"),
 // then with shorter versions of what you typed, keeping only titles that look
-// like it ("arlinton road" finds Arlington Road). Actors are shown as the
+// like it in English, Norwegian or the original language ("arlinton road"
+// finds Arlington Road, "haisomer" finds Jaws). Actors are shown as the
 // titles they're known for (see search() in lib/tmdb.js), and a pasted IMDb
 // link finds that title.
 import { search, searchTitles, findByImdb } from "../../lib/tmdb.js";
+import { lang } from "../../lib/i18n.js";
 
 const MAX_TRIES = 8;
 const simple = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9æøå ]+/g, " ").replace(/\s+/g, " ").trim();
@@ -58,9 +60,14 @@ export async function findTitles(text, page = 1) {
     }
   }
 
+  // TMDB itself finds a title by any of its translations; for close matches
+  // we compare with the title in both app languages and the original one.
+  const otherLanguage = lang === "nb" ? "en-US" : "nb-NO";
   for (const attempt of shorter(query)) {
-    const close = (await searchTitles(attempt))
-      .map((item) => ({ item, score: likeness(query, item.title) }))
+    const [mine, other] = await Promise.all([searchTitles(attempt), searchTitles(attempt, otherLanguage)]);
+    const translated = new Map(other.map((i) => [`${i.type}:${i.id}`, i.title]));
+    const close = mine
+      .map((item) => ({ item, score: Math.max(...[item.title, item.originalTitle, translated.get(`${item.type}:${item.id}`)].filter(Boolean).map((title) => likeness(query, title))) }))
       .filter((x) => x.score >= 0.6)
       .sort((a, b) => b.score - a.score)
       .map((x) => x.item);
