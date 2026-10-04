@@ -100,7 +100,9 @@ Every time you change a file on GitHub, the new version goes live within a minut
 
 ### Step 6: Invite your friends 🎉
 
-Send them the link and the invite code. They open the link, tap **Create account**, and add the app to their home screen:
+**Easiest:** open **Settings → Invite friends** in the app (only you, the administrator, see it), tap **Create invite code**, then **Share invite**. Your friend gets a link with the code filled in. Each code works for one person, for 7 days, and you can cancel it. The first account in the database is the administrator; to make someone else administrator, run `insert into private.admins (user_id) select id from public.profiles where username = 'name';` in the Supabase SQL Editor.
+
+Or send them the link and the shared invite code from step 2. They open the link, tap **Create account**, and add the app to their home screen:
 
 - **iPhone:** open in Safari → Share button → **Add to Home Screen**
 - **Android:** open in Chrome → ⋮ menu → **Install app**
@@ -180,6 +182,7 @@ js/features/             one folder per feature
   importer/              import ratings from IMDb or Letterboxd
   friends/               friends, feed, profiles, comments and reactions
   share/                 share button
+  invites/               administrator: personal invite codes
   profilepicture/        profile pictures
   imdb/                  IMDb ratings on posters and title pages
   rottentomatoes/        Rotten Tomatoes score (via Wikidata)

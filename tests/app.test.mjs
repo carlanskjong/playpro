@@ -56,6 +56,13 @@ async function open({ width = 390, lang = "en", username = "" } = {}) {
   return { context, page, errors };
 }
 
+// A visitor who isn't signed in (no fake backend needed for the sign-up form).
+async function openGuest() {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await context.addInitScript(({ mock }) => { localStorage.setItem("playpro:lang", "en"); (0, eval)(mock); }, { mock });
+  return { context, page: await context.newPage() };
+}
+
 async function visit(page, hash, waitFor) {
   await page.goto(base + "#" + hash);
   if (waitFor) await page.waitForSelector(waitFor, { timeout: 8000 });
@@ -204,6 +211,26 @@ console.log("Actions");
     const notes = await page.$$eval("#coming-series .card-meta", (els) => els.map((e) => e.textContent));
     for (const want of ["Season 4 on Netflix", "Season 5 on NRK TV", "New series on Netflix"]) if (!notes.some((n) => n.startsWith(want))) throw new Error(notes.join(" / "));
     await page.waitForSelector("#coming-films .card");
+  });
+
+  await step("administrator creates and cancels an invite code", async () => {
+    await visit(page, "/settings", "#invite-form");
+    await page.fill("#invite-form input[name=note]", "Dana");
+    await page.click("#invite-form button[type=submit]");
+    await page.waitForSelector(".invite-code");
+    const code = (await page.textContent(".invite-code")).trim();
+    if (!/^[0-9A-F]{5}-[0-9A-F]{5}$/.test(code)) throw new Error("odd code " + code);
+    await page.waitForFunction((c) => document.querySelector("#invite-list")?.textContent.includes(c), code);
+    if (!(await page.textContent("#invite-list")).includes("Used by anna")) throw new Error("used code not listed");
+    await page.click(`[data-revoke="${code}"]`);
+    await page.waitForFunction((c) => [...document.querySelectorAll(".invite-list li")].some((li) => li.textContent.includes(c) && li.textContent.includes("Cancelled")), code);
+  });
+  await step("an invite link fills in the code", async () => {
+    const { page: guest, context: guestContext } = await openGuest();
+    await guest.goto(base + "#/login?mode=signup&invite=ABCDE-12345");
+    await guest.waitForSelector("#invite");
+    if ((await guest.inputValue("#invite")) !== "ABCDE-12345") throw new Error("code not filled in");
+    await guestContext.close();
   });
 
   await visit(page, "/stats", ".chart");

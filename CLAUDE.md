@@ -8,6 +8,7 @@ Private movie/series PWA for a couple of friends in Norway: where to stream (TMD
 - **Free and private.** No paid services, analytics, trackers, Google Fonts or third-party embeds. Fonts are self-hosted in `fonts/`.
 - **Secrets:** the Supabase secret/service key lives only in GitHub Actions secrets; never in `js/config.js` or anywhere in the repo. The invite code lives only in the database. Never ask the owner to paste the secret key into chat.
 - **Usernames** follow `public.username_problem()` in the schema (format + `private.blocked_words`); the database enforces it and the app shows `js/core/rename.js` to anyone whose old name breaks a newer rule.
+- **Administrator and invites:** `private.admins` (first account) may create single-use codes in `private.invites` via `create_invite` / `my_invites` / `revoke_invite`; the sign-up trigger accepts the shared code or an unused personal one.
 - **GDPR:** new kinds of stored data need RLS, a line in the privacy notice (`js/core/pages.js`), inclusion in the data export (`exportData` slot) and `on delete cascade`.
 
 ## Architecture

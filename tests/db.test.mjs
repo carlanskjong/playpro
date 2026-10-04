@@ -124,6 +124,32 @@ await ok("job removes old rows", "service_role", null, "delete from public.imdb_
 await ok("members read ratings", "authenticated", A, "select rating from public.imdb_ratings", (r) => r.length === 1);
 await refused("members change ratings", "authenticated", A, "update public.imdb_ratings set rating = 1 returning imdb_id");
 
+console.log("Administrator and invite codes");
+await ok("the first account is the administrator", "authenticated", A, "select public.am_i_admin() as admin", (r) => r[0].admin === true);
+await ok("others are not", "authenticated", B, "select public.am_i_admin() as admin", (r) => r[0].admin === false);
+await refused("a member can't create invite codes", "authenticated", B, "select public.create_invite('x')");
+await refused("a member can't list invite codes", "authenticated", B, "select * from public.my_invites()");
+await refused("nobody reads the codes directly", "authenticated", A, "select * from private.invites");
+await refused("nobody makes themselves administrator", "authenticated", B, `insert into private.admins (user_id) values ('${B}')`);
+const code = (await as("authenticated", A, "select public.create_invite('For Dana') as c"))[0].c;
+await ok("the administrator creates a code", "postgres", null, "select 1", () => /^[0-9A-F]{5}-[0-9A-F]{5}$/.test(code));
+const D = "00000000-0000-0000-0000-00000000000d", E = "00000000-0000-0000-0000-00000000000e";
+await ok("sign up with a personal code (any case, no dash)", "supabase_auth_admin", null, user(D, "dana", code.toLowerCase().replace("-", " ")));
+await refused("the same code twice", "supabase_auth_admin", null, user(E, "eve", code));
+await ok("the list shows who used it", "authenticated", A, "select * from public.my_invites()", (r) => r.length === 1 && r[0].used_by === "dana" && r[0].note === "For Dana");
+const cancelled = (await as("authenticated", A, "select public.create_invite(null) as c"))[0].c;
+await ok("cancel an unused code", "authenticated", A, `select public.revoke_invite('${cancelled}')`);
+await refused("a cancelled code", "supabase_auth_admin", null, user(E, "eve", cancelled));
+const old = (await as("authenticated", A, "select public.create_invite(null) as c"))[0].c;
+await db.exec(`update private.invites set expires_at = now() - interval '1 minute' where code = '${old}'`);
+await refused("an expired code", "supabase_auth_admin", null, user(E, "eve", old));
+await ok("the shared code still works", "supabase_auth_admin", null, user(E, "eve"));
+await db.exec("delete from private.admins"); // a project from before administrators existed
+await db.exec(schema);
+await ok("re-running the setup makes the oldest account administrator", "authenticated", A, "select public.am_i_admin() as admin", (r) => r[0].admin === true);
+await db.exec(schema);
+await ok("and running it again doesn't add more", "postgres", null, "select count(*)::int as n from private.admins", (r) => r[0].n === 1);
+
 console.log("Delete account");
 await refused("logged-out visitor deletes", "anon", null, "select public.delete_my_account()");
 await ok("delete my account", "authenticated", A, "select public.delete_my_account()");

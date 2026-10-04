@@ -21,6 +21,7 @@ import "./features/stats/index.js";           // "Your year": what you watched, 
 import "./features/importer/index.js";        // Bring your ratings from IMDb or Letterboxd
 import "./features/friends/index.js";         // Friends, their ratings, comments and reactions (needs mylist)
 import "./features/share/index.js";           // Share button on title pages
+import "./features/invites/index.js";         // Administrator: create personal invite codes in Settings
 import "./features/profilepicture/index.js";  // Upload a profile picture in Settings
 import "./features/imdb/index.js";            // IMDb ratings on posters and title pages (needs the ratings import)
 import "./features/rottentomatoes/index.js";  // Rotten Tomatoes score via Wikidata (needs the ratings import)

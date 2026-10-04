@@ -22,6 +22,7 @@ export function privacyView({ el }) {
         <li>${t("<strong>Profile:</strong> your username, which streaming services you have, and a profile picture if you choose to add one (shrunk to a small square before it's saved).")}</li>
         <li>${t("<strong>Your activity:</strong> your watchlist, what you've seen and when, your ratings and short reviews, lists you make, and comments and reactions you add.")}</li>
         <li>${t("<strong>Friends:</strong> who you've sent or accepted friend requests to.")}</li>
+        <li>${t("<strong>Invite codes:</strong> if you joined with a personal invite code, which account used it, so the administrator who made the code can see that you joined. Codes the administrator makes are stored with an optional note about who they're for.")}</li>
       </ul>
       <p>${t("We never ask for your real name, birthday or location. A profile picture is optional, and you can remove it at any time in Settings.")}</p>
 

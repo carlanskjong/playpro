@@ -142,6 +142,29 @@ insert into private.blocked_words (word, whole_word) values
   ('official', true)
 on conflict (word) do nothing;
 
+-- The administrator(s): may create personal invite codes in Settings. The
+-- first account becomes administrator automatically (see section 4). To make
+-- someone else administrator:
+--   insert into private.admins (user_id) select id from public.profiles where username = 'name';
+create table if not exists private.admins (
+  user_id  uuid primary key references auth.users (id) on delete cascade,
+  added_at timestamptz not null default now()
+);
+alter table private.admins enable row level security;
+
+-- Personal invite codes: each works once, for 7 days, unless cancelled.
+create table if not exists private.invites (
+  code       text primary key,
+  note       text check (char_length(note) <= 60),        -- who it's for, e.g. "Anna"
+  created_by uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '7 days',
+  used_by    uuid references auth.users (id) on delete set null deferrable initially deferred,
+  used_at    timestamptz,
+  revoked_at timestamptz
+);
+alter table private.invites enable row level security;
+
 
 -- ---------------------------------------------------------------------
 -- 2. Tables
@@ -342,6 +365,76 @@ revoke execute on function public.is_friend(uuid)          from public, anon;
 revoke execute on function public.delete_my_account()      from public, anon;
 grant  execute on function public.is_friend(uuid)          to authenticated;
 grant  execute on function public.delete_my_account()      to authenticated;
+
+-- ---------------------------------------------------------------------
+-- Administrator: personal invite codes
+-- ---------------------------------------------------------------------
+-- An existing project: the oldest account becomes administrator if there
+-- is none yet.
+insert into private.admins (user_id)
+select id from public.profiles
+ where not exists (select 1 from private.admins)
+ order by created_at, id
+ limit 1
+on conflict do nothing;
+
+create or replace function public.am_i_admin()
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from private.admins where user_id = auth.uid());
+$$;
+
+-- A new code such as "7F3A9-C21E0" (case doesn't matter when typing it).
+create or replace function public.create_invite(note text default null)
+returns text
+language plpgsql volatile security definer set search_path = ''
+as $$
+declare
+  new_code text;
+begin
+  if not public.am_i_admin() then
+    raise exception 'Only the administrator can create invite codes' using errcode = '42501';
+  end if;
+  if (select count(*) from private.invites i where i.created_by = auth.uid() and i.created_at > now() - interval '1 day') >= 50 then
+    raise exception 'That is enough invite codes for today';
+  end if;
+  new_code := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 5) || '-' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 5));
+  insert into private.invites (code, note, created_by) values (new_code, nullif(trim(note), ''), auth.uid());
+  return new_code;
+end;
+$$;
+
+-- Your codes, newest first, with who used each.
+create or replace function public.my_invites()
+returns table (code text, note text, created_at timestamptz, expires_at timestamptz, used_at timestamptz, used_by text, revoked_at timestamptz)
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if not public.am_i_admin() then
+    raise exception 'Only the administrator can see invite codes' using errcode = '42501';
+  end if;
+  return query
+    select i.code, i.note, i.created_at, i.expires_at, i.used_at, p.username, i.revoked_at
+      from private.invites i
+      left join public.profiles p on p.id = i.used_by
+     where i.created_by = auth.uid()
+     order by i.created_at desc
+     limit 100;
+end;
+$$;
+
+-- Cancel a code nobody has used yet.
+create or replace function public.revoke_invite(invite text)
+returns void
+language sql volatile security definer set search_path = ''
+as $$
+  update private.invites i set revoked_at = now()
+   where i.code = invite and i.created_by = auth.uid() and i.used_at is null and i.revoked_at is null;
+$$;
+
+revoke execute on function public.am_i_admin(), public.create_invite(text), public.my_invites(), public.revoke_invite(text) from public, anon;
+grant  execute on function public.am_i_admin(), public.create_invite(text), public.my_invites(), public.revoke_invite(text) to authenticated;
 grant  execute on function public.username_available(text) to anon, authenticated;
 grant  execute on function public.username_problem(text)   to anon, authenticated;
 
@@ -355,11 +448,20 @@ language plpgsql security definer set search_path = ''
 as $$
 declare
   expected text;
+  given    text := trim(coalesce(new.raw_user_meta_data ->> 'invite_code', ''));
+  personal text;
 begin
   select value into expected from private.settings where key = 'invite_code';
-  if coalesce(expected, '') <> ''
-     and coalesce(new.raw_user_meta_data ->> 'invite_code', '') <> expected then
-    raise exception 'Invalid invite code';
+  if coalesce(expected, '') <> '' and given <> expected then
+    -- not the shared code: a personal one works once, until it expires
+    update private.invites
+       set used_by = new.id, used_at = now()
+     where replace(code, '-', '') = regexp_replace(upper(given), '[^0-9A-Z]', '', 'g')  -- ignore case, spaces and dashes
+       and used_at is null and revoked_at is null and expires_at > now()
+    returning code into personal;
+    if personal is null then
+      raise exception 'Invalid invite code';
+    end if;
   end if;
   -- don't keep the invite code stored on the user
   new.raw_user_meta_data := coalesce(new.raw_user_meta_data, '{}'::jsonb) - 'invite_code';
@@ -374,6 +476,10 @@ as $$
 begin
   insert into public.profiles (id, username)
   values (new.id, new.raw_user_meta_data ->> 'username');
+  -- the very first account is the administrator
+  if not exists (select 1 from private.admins) then
+    insert into private.admins (user_id) values (new.id);
+  end if;
   return new;
 end;
 $$;

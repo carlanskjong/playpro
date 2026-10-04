@@ -356,6 +356,11 @@ function tmdb(path, p) {
 
 // ---------- fetch ----------
 
+// Invite codes the administrator (you, in the demo) has made.
+const invites = [
+  { code: "4B7E1-90AC3", note: "Anna", created_at: ago(24 * 20), expires_at: ago(24 * 13), used_at: ago(24 * 19), used_by: "anna", revoked_at: null },
+];
+
 // A rename survives reloading the page (the rest of the fake data doesn't).
 function savedUsername() { try { return sessionStorage.getItem("playpro-mock-username"); } catch { return null; } }
 
@@ -388,6 +393,19 @@ globalThis.fetch = async (input, init = {}) => {
   if (path.startsWith("/auth/v1/logout")) return new Response(null, { status: 204 });
   if (path.startsWith("/auth/v1/recover")) return json({});
   if (path === "/rest/v1/rpc/username_available") return json(true);
+  if (path === "/rest/v1/rpc/am_i_admin") return json(true);
+  if (path === "/rest/v1/rpc/create_invite") {
+    const hex = () => Math.random().toString(16).slice(2, 7).toUpperCase().padEnd(5, "0");
+    const code = `${hex()}-${hex()}`;
+    invites.unshift({ code, note: JSON.parse(init.body || "{}").note || null, created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 7 * 864e5).toISOString(), used_at: null, used_by: null, revoked_at: null });
+    return json(code);
+  }
+  if (path === "/rest/v1/rpc/my_invites") return json(invites);
+  if (path === "/rest/v1/rpc/revoke_invite") {
+    const hit = invites.find((i) => i.code === JSON.parse(init.body).invite && !i.used_at);
+    if (hit) hit.revoked_at = new Date().toISOString();
+    return json(null, 204);
+  }
   if (path === "/rest/v1/rpc/username_problem") return json(usernameProblem(JSON.parse(init.body).name));
   if (path === "/rest/v1/rpc/delete_my_account") {
     db.entries = db.entries.filter((e) => e.user_id !== ME);

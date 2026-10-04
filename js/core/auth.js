@@ -42,7 +42,7 @@ export async function loginView({ el, query }) {
         ${field("username", t("Username"), `<input name="username" autocomplete="username" required pattern="[A-Za-z0-9_]{3,20}" maxlength="20">`, t("3 to 20 letters, numbers or _, and nothing rude. Other members can see it."))}
         ${field("email", t("Email"), `<input type="email" name="email" autocomplete="email" required>`, t("Only used to sign in. Nobody else sees it."))}
         ${field("password", t("Password"), `<input type="password" name="password" autocomplete="new-password" required minlength="8">`, t("At least 8 characters."))}
-        ${field("invite", t("Invite code"), `<input name="invite" required autocomplete="off">`, t("Ask the person who sent you the link."))}
+        ${field("invite", t("Invite code"), `<input name="invite" required autocomplete="off" autocapitalize="characters" value="${esc(query.get("invite") || "")}">`, t("Ask the person who sent you the link."))}
         <label class="check"><input type="checkbox" name="consent" required>
           <span>${t("I have read the {link} and want an account.", { link: `<a href="#/privacy" target="_blank">${esc(t("privacy notice"))}</a>` })}</span></label>
         <button class="btn btn-primary btn-block" type="submit">${esc(t("Create account"))}</button>
