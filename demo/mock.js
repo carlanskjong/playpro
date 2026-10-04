@@ -371,6 +371,11 @@ globalThis.fetch = async (input, init = {}) => {
   if (!db[table]) return json({ message: `no table ${table}` }, 404);
   let body = null;
   try { body = init.body ? JSON.parse(init.body) : null; } catch { /* not JSON */ }
+  // Like the real database: comments and reactions link entries to profiles a
+  // second way, so an embed must say which link to follow (profiles!user_id).
+  if (table === "entries" && /(^|[,\s])profiles\(/.test(url.searchParams.get("select") || "")) {
+    return json({ code: "PGRST201", message: "Could not embed because more than one relationship was found for 'entries' and 'profiles'" }, 300);
+  }
   const rows = method === "GET" ? select(table, url.searchParams).map((r) => embed(table, r)) : write(table, method, url.searchParams, body);
   const wantsObject = (headers.get("accept") || "").includes("vnd.pgrst.object");
   if (wantsObject) return rows[0] ? json(rows[0]) : json({ message: "No rows" }, 406);

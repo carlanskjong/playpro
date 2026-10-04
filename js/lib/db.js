@@ -145,7 +145,7 @@ export async function friendsOnTitle(type, id) {
   return check(
     await sb
       .from("entries")
-      .select("user_id, media_type, tmdb_id, status, rating, review, updated_at, profiles(username)")
+      .select("user_id, media_type, tmdb_id, status, rating, review, updated_at, profiles!user_id(username)")
       .eq("media_type", type)
       .eq("tmdb_id", id)
       .neq("user_id", uid())
@@ -157,7 +157,7 @@ export async function friendFeed(limit = 30) {
   return check(
     await sb
       .from("entries")
-      .select("*, profiles(username)")
+      .select("*, profiles!user_id(username)")
       .neq("user_id", uid())
       .order("updated_at", { ascending: false })
       .limit(limit),
@@ -166,7 +166,7 @@ export async function friendFeed(limit = 30) {
 
 // Your friends' watchlists (for "what should we watch tonight?").
 export async function friendsWatchlists() {
-  return check(await sb.from("entries").select("*, profiles(username)").neq("user_id", uid()).eq("status", "watchlist"));
+  return check(await sb.from("entries").select("*, profiles!user_id(username)").neq("user_id", uid()).eq("status", "watchlist"));
 }
 
 export async function entriesOf(userId) {

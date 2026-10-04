@@ -9,8 +9,8 @@ export const KINDS = { like: "👍", love: "❤️", laugh: "😂", wow: "😮",
 // Everything said about every rating of one title, in two requests.
 export async function loadTalk(type, id) {
   const [reactions, comments] = await Promise.all([
-    sb.from("reactions").select("entry_user, kind, author, profiles(username)").eq("media_type", type).eq("tmdb_id", id).then(check),
-    sb.from("comments").select("id, entry_user, author, body, created_at, profiles(username)").eq("media_type", type).eq("tmdb_id", id).order("created_at").then(check),
+    sb.from("reactions").select("entry_user, kind, author, profiles!author(username)").eq("media_type", type).eq("tmdb_id", id).then(check),
+    sb.from("comments").select("id, entry_user, author, body, created_at, profiles!author(username)").eq("media_type", type).eq("tmdb_id", id).order("created_at").then(check),
   ]);
   return { reactions, comments };
 }

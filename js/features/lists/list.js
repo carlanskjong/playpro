@@ -10,7 +10,7 @@ export default async function listView(ctx) {
   // A fresh container each time, so click handlers never pile up on reload.
   const el = document.createElement("div");
   ctx.el.replaceChildren(el);
-  const list = check(await sb.from("lists").select("id, owner, name, shared, profiles(username), list_items(*)").eq("id", id).maybeSingle());
+  const list = check(await sb.from("lists").select("id, owner, name, shared, profiles!owner(username), list_items(*)").eq("id", id).maybeSingle());
   if (!list) {
     el.innerHTML = empty(t("This list isn't available"), esc(t("It may be private or deleted.")), `<a class="btn" href="#/lists">${esc(t("All lists"))}</a>`);
     return;

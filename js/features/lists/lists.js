@@ -17,7 +17,7 @@ const tile = (l, owner = "") => {
 
 export default async function listsView({ el }) {
   document.title = `${t("Lists")} · Playpro`;
-  const lists = check(await sb.from("lists").select("id, owner, name, shared, profiles(username), list_items(poster_path, added_at)").order("created_at", { ascending: false }));
+  const lists = check(await sb.from("lists").select("id, owner, name, shared, profiles!owner(username), list_items(poster_path, added_at)").order("created_at", { ascending: false }));
   const mine = lists.filter((l) => l.owner === uidOf());
   const theirs = lists.filter((l) => l.owner !== uidOf());
   el.innerHTML = `
