@@ -111,9 +111,17 @@ export async function trending(type = "all") {
   return list(await get(`/trending/${type}/week`), type === "all" ? undefined : type);
 }
 
+// Movies and series. An actor or director who comes before any title (you
+// searched for them) is shown as the titles they're known for.
 export async function search(query, page = 1) {
   const data = await get("/search/multi", { query, page, include_adult: "false" });
-  return { items: list(data), totalPages: data.total_pages || 1 };
+  const results = data.results || [];
+  const firstTitle = results.findIndex((r) => r.media_type === "movie" || r.media_type === "tv");
+  const people = results.slice(0, firstTitle < 0 ? results.length : firstTitle).filter((r) => r.media_type === "person");
+  const known = people.flatMap((p) => p.known_for || []);
+  const seen = new Set();
+  const items = list({ results: [...known, ...results] }).filter((i) => !seen.has(`${i.type}:${i.id}`) && seen.add(`${i.type}:${i.id}`));
+  return { items, totalPages: data.total_pages || 1 };
 }
 
 export async function discover(type, { providers = [], region, genre, sort = "popularity.desc", page = 1, minVotes } = {}) {

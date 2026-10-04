@@ -218,7 +218,9 @@ export default {
   "Movies, series, actors…": "Filmer, serier, skuespillere…",
   "Search movies and series": "Søk etter filmer og serier",
   "No results": "Ingen treff",
-  "Nothing matched “{q}”. Check the spelling, or try the original title.": "Ingenting passet til «{q}». Sjekk stavingen, eller prøv originaltittelen.",
+  "Nothing matched “{q}”. Check the spelling, or try the original title or an IMDb link.": "Ingenting passet til «{q}». Sjekk stavingen, eller prøv originaltittelen eller en IMDb-lenke.",
+  "Nothing matched with the year, so here are all years. {year} comes first.": "Ingenting passet med årstallet, så her er alle år. {year} kommer først.",
+  "Nothing matched exactly. These are close matches.": "Ingenting passet nøyaktig. Dette er de nærmeste treffene.",
   "Search didn't work": "Søket fungerte ikke",
 
   // ---------- friends ----------

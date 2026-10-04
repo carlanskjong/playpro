@@ -1,6 +1,7 @@
 // FEATURE: Search for movies and series.
 import { register } from "../../core/registry.js";
-import { search, trending } from "../../lib/tmdb.js";
+import { trending } from "../../lib/tmdb.js";
+import { findTitles } from "./find.js";
 import { esc, icon, grid, card, skeletonGrid, empty, errorMessage } from "../../lib/ui.js";
 import { t } from "../../lib/i18n.js";
 
@@ -36,13 +37,16 @@ async function searchView({ el, query }) {
     }
     if (reset) { page = 1; results.innerHTML = skeletonGrid(); }
     try {
-      const data = await search(q.trim(), page);
+      const data = await findTitles(q.trim(), page);
       if (id !== requestId) return;
       const html = data.items.map((i) => card(i)).join("");
       if (reset) {
+        const note = data.note === "year"
+          ? t("Nothing matched with the year, so here are all years. {year} comes first.", { year: data.year })
+          : data.note === "close" ? t("Nothing matched exactly. These are close matches.") : "";
         results.innerHTML = data.items.length
-          ? grid([html])
-          : empty(t("No results"), esc(t("Nothing matched “{q}”. Check the spelling, or try the original title.", { q })), "", "popcorn");
+          ? (note ? `<p class="search-note">${esc(note)}</p>` : "") + grid([html])
+          : empty(t("No results"), esc(t("Nothing matched “{q}”. Check the spelling, or try the original title or an IMDb link.", { q })), "", "popcorn");
       } else results.querySelector(".grid")?.insertAdjacentHTML("beforeend", html);
       more.hidden = page >= data.totalPages;
     } catch (err) {

@@ -481,6 +481,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--l
 .searchbox:focus-within { border-color: var(--lamp); }
 .searchbox svg { color: var(--fjord); }
 .searchbox input { border: 0 !important; background: transparent !important; min-height: 50px; padding: 0 !important; font-size: 1.0625rem; }
+.search-note { margin: -6px 0 16px; color: var(--fjord); max-width: 60ch; }
 
 .segmented { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 18px; border-radius: 99px; background: var(--dusk); }
 .segmented button, .segmented a { border: 0; background: transparent; padding: 7px 16px; border-radius: 99px; font-weight: 650; color: var(--fjord); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }

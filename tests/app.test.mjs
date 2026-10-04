@@ -177,6 +177,16 @@ console.log("Actions");
     if (!notes.every((n) => /IMDb (\d+[.,]\d)/.test(n) && parseFloat(n.match(/(\d+[.,]\d)/)[1].replace(",", ".")) >= 7)) throw new Error(notes.join(" / "));
   });
 
+  const searchFinds = async (text, title, note) => {
+    await visit(page, `/search?q=${encodeURIComponent(text)}`, "#results .grid");
+    const first = await page.textContent("#results .card-title");
+    if (first !== title) throw new Error(`first result was ${first}`);
+    if (note && !(await page.isVisible(".search-note"))) throw new Error("no note about the changed search");
+  };
+  await step("search with the year added", () => searchFinds("Dune part two 2024", "Dune: Part Two", true));
+  await step("search with a typo", () => searchFinds("dune prat two", "Dune: Part Two", true));
+  await step("search with an IMDb link", () => searchFinds("https://www.imdb.com/title/tt1693134/", "Dune: Part Two"));
+
   await visit(page, "/stats", ".chart");
   await step("year chart has 12 months and a table", async () => {
     if ((await page.$$(".chart .bar")).length !== 12) throw new Error("not 12 bars");

@@ -1,6 +1,6 @@
 // Service worker: makes Playpro installable and load fast / offline.
 // Bump VERSION when you want every phone to drop its old cached copy.
-const VERSION = "playpro-v3";
+const VERSION = "playpro-v4";
 const SHELL = [
   "./",
   "index.html",
@@ -11,7 +11,7 @@ const SHELL = [
   "fonts/anybody.woff2",
   "fonts/familjen-grotesk.woff2",
 ];
-const IMAGES = "playpro-images";
+const IMAGES = "playpro-images"; // posters; TMDB answers live in "playpro-tmdb-…" (js/lib/tmdb.js)
 const MAX_IMAGES = 400;
 
 self.addEventListener("install", (event) => {
@@ -21,7 +21,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== IMAGES).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== IMAGES && !k.startsWith("playpro-tmdb")).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
